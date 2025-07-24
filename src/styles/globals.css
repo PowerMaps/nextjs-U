@@ -76,11 +76,11 @@
 }
 
 /* Map styles */
-.mapboxgl-map {
+.map-container {
   @apply rounded-lg;
 }
 
-.mapboxgl-ctrl-logo {
+.gm-style-cc {
   @apply hidden;
 }
 

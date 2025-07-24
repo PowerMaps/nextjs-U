@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/contexts/auth-context';
 import { LoginDto, RegisterDto } from '@/lib/api/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Hook for login functionality
 export function useLogin() {
@@ -131,5 +131,69 @@ export function useProtectedAction() {
     executeIfAuthenticated,
     isAuthenticated,
     isLoading,
+  };
+}
+
+// Hook for session timeout management
+export function useSessionTimeout() {
+  const { user, isAuthenticated } = useAuth();
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  
+  // Session timeout settings (in milliseconds)
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  const WARNING_TIME = 5 * 60 * 1000; // Show warning 5 minutes before timeout
+  
+  // Update last activity on user interactions
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const updateActivity = () => {
+      setLastActivity(Date.now());
+    };
+    
+    // Add event listeners
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity, true);
+    });
+    
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity, true);
+      });
+    };
+  }, [isAuthenticated]);
+  
+  const updateLastActivity = () => {
+    setLastActivity(Date.now());
+  };
+  
+  const getTimeUntilExpiration = () => {
+    if (!isAuthenticated) return null;
+    const timeElapsed = Date.now() - lastActivity;
+    const timeRemaining = SESSION_TIMEOUT - timeElapsed;
+    return timeRemaining > 0 ? timeRemaining : 0;
+  };
+  
+  const shouldShowWarning = () => {
+    if (!isAuthenticated) return false;
+    const timeRemaining = getTimeUntilExpiration();
+    return timeRemaining !== null && timeRemaining <= WARNING_TIME && timeRemaining > 0;
+  };
+  
+  const isSessionExpired = () => {
+    if (!isAuthenticated) return false;
+    const timeRemaining = getTimeUntilExpiration();
+    return timeRemaining === 0;
+  };
+  
+  return {
+    updateLastActivity,
+    getTimeUntilExpiration,
+    shouldShowWarning,
+    isSessionExpired,
+    lastActivity,
   };
 }

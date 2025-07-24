@@ -39,6 +39,18 @@ export {
 
 // Existing UI Components
 export { Button } from "./button";
+export { Badge } from "./badge";
+export type { BadgeProps } from "./badge";
+export { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "./dialog";
 export { DropdownMenu } from "./dropdown-menu";
 export { Toast } from "./toast";
 export { useToast } from "./use-toast";

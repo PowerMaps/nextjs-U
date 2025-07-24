@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import dynamic from 'next/dynamic';
+
+const LazyLoadedComponent = dynamic(() => import('@/components/lazy-loaded-component'), {
+  loading: () => <p>Loading lazy component...</p>,
+});
 
 export default function Home() {
   return (
@@ -166,6 +171,16 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Lazy Loaded Component Section */}
+      <section className="bg-gray-100 py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
+            Dynamic Content Example
+          </h2>
+          <LazyLoadedComponent />
         </div>
       </section>
 

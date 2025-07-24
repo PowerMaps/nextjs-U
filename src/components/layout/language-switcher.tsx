@@ -1,0 +1,1 @@
+// Language switcher component removed - internationalization disabled

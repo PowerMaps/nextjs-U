@@ -127,15 +127,18 @@ class OfflineQueue {
     this.saveQueue();
   }
 
-  // Check if a request is in the queue
   public isInQueue(id: string): boolean {
     return this.queue.some(request => request.id === id);
   }
 
-  // Handle going online
+  // Sync with the server
+  public async sync(): Promise<void> {
+    await this.processQueue();
+    // Add logic here to fetch latest data from the server and update local storage
+  }
   private handleOnline = (): void => {
     this.isOnline = true;
-    this.processQueue();
+    this.sync();
     
     toast({
       title: 'You are back online',

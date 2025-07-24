@@ -8,6 +8,9 @@ import Footer from "./footer";
 import { cn } from "@/lib/utils/cn";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 
+import { SessionTimeoutModal } from "@/components/auth/session-timeout-modal";
+import { useAuthStore } from "@/lib/store/auth-store";
+
 interface MainLayoutProps {
   children: React.ReactNode;
 }
@@ -15,6 +18,20 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { updateLastActivity } = useAuthStore();
+
+  // Track user activity
+  useEffect(() => {
+    const events = ["mousemove", "keydown", "mousedown", "touchstart"];
+    const resetTimer = () => updateLastActivity();
+
+    events.forEach((event) => window.addEventListener(event, resetTimer));
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+    };
+  }, [updateLastActivity]);
+""
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -41,8 +58,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </main>
       </div>
       
-      {/* Offline status indicator */}
+        {/* Offline status indicator */}
       <OfflineIndicator />
+      <SessionTimeoutModal />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   RegisterDto, 
   UserResponseDto 
 } from '@/lib/api/types';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // Authentication state interface
 interface AuthState {
@@ -35,31 +36,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Token storage utilities
-const tokenStorage = {
-  getAccessToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('accessToken');
-  },
-  
-  getRefreshToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('refreshToken');
-  },
-  
-  setTokens: (accessToken: string, refreshToken: string): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-  },
-  
-  clearTokens: (): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  },
-};
-
 // Authentication provider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
@@ -70,18 +46,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
   
   const router = useRouter();
+  const { accessToken, refreshToken, setTokens, clearTokens, preferences } = useAuthStore();
 
   // Initialize authentication state on mount
   useEffect(() => {
     initializeAuth();
-  }, []);
+  }, [accessToken, refreshToken]);
 
   // Initialize authentication state
   const initializeAuth = async () => {
     try {
-      const accessToken = tokenStorage.getAccessToken();
-      const refreshToken = tokenStorage.getRefreshToken();
-
       if (!accessToken || !refreshToken) {
         setState(prev => ({ ...prev, isLoading: false }));
         return;
@@ -92,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('Failed to initialize auth:', error);
       // Clear invalid tokens
-      tokenStorage.clearTokens();
+      clearTokens();
       setState(prev => ({ 
         ...prev, 
         isLoading: false,
@@ -105,13 +79,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (credentials: LoginDto): Promise<void> => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
-        delete credentials.rememberMe
-      const response = await apiClient.post<AuthResponseDto>('/api/v1/auth/login', credentials);
+      delete credentials.rememberMe; // Ensure no confirmPassword field is sent
+      const response = await apiClient.post<AuthResponseDto>('/auth/login', credentials);
       
       const { accessToken, refreshToken, user } = response;
 
       // Store tokens
-      tokenStorage.setTokens(accessToken, refreshToken);
+      setTokens({ accessToken, refreshToken });
 
       // Update state
       setState(prev => ({
@@ -142,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { accessToken, refreshToken, user } = response;
 
       // Store tokens
-      tokenStorage.setTokens(accessToken, refreshToken);
+      setTokens({ accessToken, refreshToken });
 
       // Update state
       setState(prev => ({
@@ -172,7 +146,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Logout API call failed:', error);
     } finally {
       // Clear local state and tokens regardless of API call result
-      tokenStorage.clearTokens();
+      clearTokens();
       setState({
         user: null,
         isAuthenticated: false,
@@ -199,7 +173,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }));
     } catch (error: any) {
       // If getting user fails, tokens might be invalid
-      tokenStorage.clearTokens();
+      clearTokens();
       setState(prev => ({
         ...prev,
         user: null,

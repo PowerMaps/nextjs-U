@@ -14,7 +14,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (credentials: LoginDto) => {
-      const response = await apiClient.post<AuthResponseDto>('/api/v1/auth/login', credentials);
+      const response = await apiClient.post<AuthResponseDto>('/auth/login', credentials);
       
       // Store tokens in localStorage
       if (typeof window !== 'undefined') {

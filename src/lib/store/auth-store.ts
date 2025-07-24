@@ -24,6 +24,10 @@ interface AuthUIState {
 
 // Authentication store state
 interface AuthStoreState {
+  // Token management
+  accessToken: string | null;
+  refreshToken: string | null;
+
   // Preferences
   preferences: AuthPreferences;
   
@@ -53,10 +57,15 @@ interface AuthStoreState {
   setLoginFormStep: (step: AuthUIState['loginFormStep']) => void;
   setRegisterFormStep: (step: AuthUIState['registerFormStep']) => void;
   
-  // Actions for session management
+   // Actions for session management
   updateLastActivity: () => void;
   setSessionWarningShown: (shown: boolean) => void;
   resetSession: () => void;
+
+  // Actions for token management
+  setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
+  clearTokens: () => void;
+
   
   // Utility actions
   resetUI: () => void;
@@ -86,149 +95,166 @@ const defaultUIState: AuthUIState = {
 // Create the authentication store
 export const useAuthStore = create<AuthStoreState>()(
   persist(
-    (set, get) => ({
-      // Initial state
-      preferences: defaultPreferences,
-      ui: defaultUIState,
+(set, get) => ({
+    // Initial state
+  accessToken: null,
+  refreshToken: null,
+  preferences: defaultPreferences,
+  ui: defaultUIState,
+  lastActivity: null,
+  sessionWarningShown: false,
+
+  // Preference actions
+  setRememberMe: (remember: boolean) =>
+    set((state) => ({
+      preferences: { ...state.preferences, rememberMe: remember },
+    })),
+
+  setLastLoginEmail: (email: string | null) =>
+    set((state) => ({
+      preferences: { ...state.preferences, lastLoginEmail: email },
+    })),
+
+  setPreferredLoginMethod: (method: 'email' | 'social') =>
+    set((state) => ({
+      preferences: { ...state.preferences, preferredLoginMethod: method },
+    })),
+
+  setAutoLogout: (enabled: boolean) =>
+    set((state) => ({
+      preferences: { ...state.preferences, autoLogout: enabled },
+    })),
+
+  setAutoLogoutDuration: (duration: number) =>
+    set((state) => ({
+      preferences: { ...state.preferences, autoLogoutDuration: duration },
+    })),
+
+  // UI actions
+  showLogin: () =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        showLoginForm: true,
+        showRegisterForm: false,
+        showForgotPasswordForm: false,
+      },
+    })),
+
+  showRegister: () =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        showLoginForm: false,
+        showRegisterForm: true,
+        showForgotPasswordForm: false,
+      },
+    })),
+
+  showForgotPassword: () =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        showLoginForm: false,
+        showRegisterForm: false,
+        showForgotPasswordForm: true,
+      },
+    })),
+
+  hideAllForms: () =>
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        showLoginForm: false,
+        showRegisterForm: false,
+        showForgotPasswordForm: false,
+      },
+    })),
+
+  openLoginModal: () =>
+    set((state) => ({
+      ui: { ...state.ui, isLoginModalOpen: true },
+    })),
+
+  closeLoginModal: () =>
+    set((state) => ({
+      ui: { ...state.ui, isLoginModalOpen: false },
+    })),
+
+  openRegisterModal: () =>
+    set((state) => ({
+      ui: { ...state.ui, isRegisterModalOpen: true },
+    })),
+
+  closeRegisterModal: () =>
+    set((state) => ({
+      ui: { ...state.ui, isRegisterModalOpen: false },
+    })),
+
+  setLoginFormStep: (step: AuthUIState['loginFormStep']) =>
+    set((state) => ({
+      ui: { ...state.ui, loginFormStep: step },
+    })),
+
+  setRegisterFormStep: (step: AuthUIState['registerFormStep']) =>
+    set((state) => ({
+      ui: { ...state.ui, registerFormStep: step },
+    })),
+
+  // Session management actions
+  updateLastActivity: () =>
+    set(() => ({
+      lastActivity: Date.now(),
+      sessionWarningShown: false,
+    })),
+
+  setSessionWarningShown: (shown: boolean) =>
+    set(() => ({
+      sessionWarningShown: shown,
+    })),
+
+  resetSession: () =>
+    set(() => ({
       lastActivity: null,
       sessionWarningShown: false,
+    })),
 
-      // Preference actions
-      setRememberMe: (remember) =>
-        set((state) => ({
-          preferences: { ...state.preferences, rememberMe: remember },
-        })),
+  // Token management actions
+  setTokens: (tokens: { accessToken: string; refreshToken: string }) =>
+    set(() => ({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    })),
 
-      setLastLoginEmail: (email) =>
-        set((state) => ({
-          preferences: { ...state.preferences, lastLoginEmail: email },
-        })),
+  clearTokens: () =>
+    set(() => ({
+      accessToken: null,
+      refreshToken: null,
+    })),
 
-      setPreferredLoginMethod: (method) =>
-        set((state) => ({
-          preferences: { ...state.preferences, preferredLoginMethod: method },
-        })),
+  // Utility actions
+  resetUI: () =>
+    set((state) => ({
+      ui: defaultUIState,
+    })),
 
-      setAutoLogout: (enabled) =>
-        set((state) => ({
-          preferences: { ...state.preferences, autoLogout: enabled },
-        })),
-
-      setAutoLogoutDuration: (duration) =>
-        set((state) => ({
-          preferences: { ...state.preferences, autoLogoutDuration: duration },
-        })),
-
-      // UI actions
-      showLogin: () =>
-        set((state) => ({
-          ui: {
-            ...state.ui,
-            showLoginForm: true,
-            showRegisterForm: false,
-            showForgotPasswordForm: false,
-          },
-        })),
-
-      showRegister: () =>
-        set((state) => ({
-          ui: {
-            ...state.ui,
-            showLoginForm: false,
-            showRegisterForm: true,
-            showForgotPasswordForm: false,
-          },
-        })),
-
-      showForgotPassword: () =>
-        set((state) => ({
-          ui: {
-            ...state.ui,
-            showLoginForm: false,
-            showRegisterForm: false,
-            showForgotPasswordForm: true,
-          },
-        })),
-
-      hideAllForms: () =>
-        set((state) => ({
-          ui: {
-            ...state.ui,
-            showLoginForm: false,
-            showRegisterForm: false,
-            showForgotPasswordForm: false,
-          },
-        })),
-
-      openLoginModal: () =>
-        set((state) => ({
-          ui: { ...state.ui, isLoginModalOpen: true },
-        })),
-
-      closeLoginModal: () =>
-        set((state) => ({
-          ui: { ...state.ui, isLoginModalOpen: false },
-        })),
-
-      openRegisterModal: () =>
-        set((state) => ({
-          ui: { ...state.ui, isRegisterModalOpen: true },
-        })),
-
-      closeRegisterModal: () =>
-        set((state) => ({
-          ui: { ...state.ui, isRegisterModalOpen: false },
-        })),
-
-      setLoginFormStep: (step) =>
-        set((state) => ({
-          ui: { ...state.ui, loginFormStep: step },
-        })),
-
-      setRegisterFormStep: (step) =>
-        set((state) => ({
-          ui: { ...state.ui, registerFormStep: step },
-        })),
-
-      // Session management actions
-      updateLastActivity: () =>
-        set(() => ({
-          lastActivity: Date.now(),
-          sessionWarningShown: false,
-        })),
-
-      setSessionWarningShown: (shown) =>
-        set(() => ({
-          sessionWarningShown: shown,
-        })),
-
-      resetSession: () =>
-        set(() => ({
-          lastActivity: null,
-          sessionWarningShown: false,
-        })),
-
-      // Utility actions
-      resetUI: () =>
-        set((state) => ({
-          ui: defaultUIState,
-        })),
-
-      resetPreferences: () =>
-        set((state) => ({
-          preferences: defaultPreferences,
-        })),
-    }),
+  resetPreferences: () =>
+    set((state) => ({
+      preferences: defaultPreferences,
+    })),
+}),
     {
       name: 'auth-store',
-      // Only persist preferences, not UI state or session data
+           // Only persist preferences and tokens, not UI state or session data
+      // Only persist preferences and tokens, not UI state or session data
       partialize: (state) => ({
         preferences: state.preferences,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
     }
   )
 );
-
 // Selectors for common use cases
 export const useAuthPreferences = () => useAuthStore((state) => state.preferences);
 export const useAuthUI = () => useAuthStore((state) => state.ui);
