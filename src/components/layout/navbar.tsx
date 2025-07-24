@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Bell, Menu, Search, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./theme-toggle";
-import { LanguageSwitcher } from "./language-switcher";
 import NotificationDropdown from "./notification-dropdown";
 import UserDropdown from "./user-dropdown";
 
@@ -89,7 +88,6 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               </Button>
               
               <ThemeToggle />
-              <LanguageSwitcher />
               
               {isDashboard ? (
                 <>
