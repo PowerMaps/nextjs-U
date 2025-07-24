@@ -22,7 +22,7 @@ export default function Footer() {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-sm font-medium">ChargeTN</span>
+            <span className="text-sm font-medium">PowerMaps</span>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
@@ -41,7 +41,7 @@ export default function Footer() {
           </div>
           
           <div className="text-sm text-muted-foreground">
-            &copy; {currentYear} ChargeTN. All rights reserved.
+            &copy; {currentYear} PowerMaps. All rights reserved.
           </div>
         </div>
       </div>

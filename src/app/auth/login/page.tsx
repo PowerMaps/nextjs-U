@@ -69,7 +69,7 @@ export default function LoginPage() {
       
       toast({
         title: "Login successful",
-        description: "Welcome back to ChargeTN!",
+        description: "Welcome back to PowerMaps!",
       });
       
       // Redirect is handled automatically by useAuthRedirect
@@ -112,7 +112,7 @@ export default function LoginPage() {
     <GuestOnlyRoute>
       <AuthLayout 
         title="Welcome back"
-        subtitle="Sign in to your ChargeTN account"
+        subtitle="Sign in to your PowerMaps account"
       >
         <div className="w-full">
         <Card>

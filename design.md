@@ -1,8 +1,8 @@
-# Design Document: Modern UI for ChargeTN
+# Design Document: Modern UI for PowerMaps
 
 ## Overview
 
-This design document outlines the architecture and implementation details for a modern, ergonomic UI using Next.js and TypeScript that will interface with the existing ChargeTN API. The UI will provide users with a seamless experience for managing their electric vehicles, planning routes, finding charging stations, and monitoring their account.
+This design document outlines the architecture and implementation details for a modern, ergonomic UI using Next.js and TypeScript that will interface with the existing PowerMaps API. The UI will provide users with a seamless experience for managing their electric vehicles, planning routes, finding charging stations, and monitoring their account.
 
 The application will follow a responsive design approach, ensuring optimal user experience across desktop and mobile devices. It will leverage Next.js's server-side rendering capabilities for improved performance and SEO, while using TypeScript for type safety and improved developer experience.
 

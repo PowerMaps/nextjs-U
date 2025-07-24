@@ -1,6 +1,6 @@
-# ChargeTN Frontend
+# PowerMaps Frontend
 
-This is the frontend application for ChargeTN, built with Next.js and TypeScript.
+This is the frontend application for PowerMaps, built with Next.js and TypeScript.
 
 ## Getting Started
 

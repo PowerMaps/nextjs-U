@@ -73,14 +73,14 @@ export default function RegisterPage() {
     <GuestOnlyRoute>
       <AuthLayout
         title="Create an account"
-        subtitle="Enter your details to get started with ChargeTN"
+        subtitle="Enter your details to get started with PowerMaps"
       >
         <div className="w-full">
           <Card>
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Register</CardTitle>
               <CardDescription>
-                Create your ChargeTN account
+                Create your PowerMaps account
               </CardDescription>
               {error && (
                 <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">

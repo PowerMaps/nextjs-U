@@ -1,6 +1,6 @@
 # Authentication System
 
-This authentication system provides a comprehensive solution for user authentication, authorization, and session management in the ChargeTN application.
+This authentication system provides a comprehensive solution for user authentication, authorization, and session management in the PowerMaps application.
 
 ## Features
 

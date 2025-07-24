@@ -45,7 +45,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xl font-bold">ChargeTN</span>
+            <span className="text-xl font-bold">PowerMaps</span>
           </Link>
         </div>
 

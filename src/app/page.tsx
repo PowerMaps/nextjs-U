@@ -28,7 +28,7 @@ export default function Home() {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-xl font-bold">ChargeTN</span>
+              <span className="text-xl font-bold">PowerMaps</span>
             </div>
             <div className="hidden space-x-4 md:flex">
               <Link href="/about" className="hover:text-gray-200">
@@ -192,7 +192,7 @@ export default function Home() {
               Ready to start your journey?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg">
-              Join thousands of EV drivers who use ChargeTN to make their electric vehicle experience better.
+              Join thousands of EV drivers who use PowerMaps to make their electric vehicle experience better.
             </p>
             <div className="mt-8">
               <Link href="/auth/register">
@@ -223,7 +223,7 @@ export default function Home() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-lg font-bold">ChargeTN</span>
+                <span className="text-lg font-bold">PowerMaps</span>
               </div>
               <p className="mt-4 text-gray-400">
                 Making electric vehicle charging accessible and convenient across Tunisia.
@@ -302,7 +302,7 @@ export default function Home() {
           </div>
           <div className="mt-12 border-t border-gray-800 pt-8 text-center">
             <p className="text-gray-400">
-              &copy; {new Date().getFullYear()} ChargeTN. All rights reserved.
+              &copy; {new Date().getFullYear()} PowerMaps. All rights reserved.
             </p>
           </div>
         </div>

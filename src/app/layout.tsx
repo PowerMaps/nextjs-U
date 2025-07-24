@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 const inter = Inter({ subsets: ['latin'] });
 
 const metadata: Metadata = {
-  title: 'ChargeTN - EV Charging Network',
+  title: 'PowerMaps - EV Charging Network',
   description: 'Find and navigate to EV charging stations across Tunisia',
 };
 
