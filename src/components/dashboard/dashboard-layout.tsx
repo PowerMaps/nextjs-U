@@ -1,26 +1,16 @@
 "use client";
 
-import { Sidebar } from 'lucide-react';
-import React, { useState } from 'react';
-import Navbar from '../layout/navbar';
+import React from 'react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleMenuClick = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar />
-      <div className="flex flex-col flex-1 ">
-        {/* <Navbar onMenuClick={handleMenuClick} /> */}
-        <main className="flex-1 p-8">
+      <div className="flex flex-col flex-1">
+        <main className="flex-1 p-0 sm:p-2 md:p-4 lg:p-6">
           {children}
         </main>
       </div>

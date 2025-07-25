@@ -20,8 +20,50 @@ export function StationDetailsSidebar({ stationId, onClose }: StationDetailsSide
   }
 
   return (
-    <div className="absolute top-4 right-4 z-20 w-96 max-h-[calc(100vh-2rem)] overflow-hidden">
-      <Card className="shadow-xl border-2">
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block absolute top-4 right-4 z-20 w-96 max-h-[calc(100vh-2rem)] overflow-hidden">
+        <Card className="shadow-xl border-2">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="text-lg font-semibold">Station Details</h3>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+            {isLoading && (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">Loading station details...</p>
+                </div>
+              </div>
+            )}
+            
+            {error && (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+                  <p className="text-sm text-red-600 mb-4">Failed to load station details</p>
+                  <Button variant="outline" size="sm" onClick={onClose}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {station && !isLoading && !error && (
+              <div className="p-0">
+                <StationInfoWindow station={station} onClose={onClose} />
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Mobile Bottom Sheet */}
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 bg-white border-t shadow-xl max-h-[70vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold">Station Details</h3>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -29,7 +71,7 @@ export function StationDetailsSidebar({ stationId, onClose }: StationDetailsSide
           </Button>
         </div>
         
-        <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <div className="max-h-[calc(70vh-4rem)] overflow-y-auto">
           {isLoading && (
             <div className="flex items-center justify-center p-8">
               <div className="text-center">
@@ -57,7 +99,7 @@ export function StationDetailsSidebar({ stationId, onClose }: StationDetailsSide
             </div>
           )}
         </div>
-      </Card>
-    </div>
+      </div>
+    </>
   );
 }

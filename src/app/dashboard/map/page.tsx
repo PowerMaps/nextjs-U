@@ -302,8 +302,8 @@ export default function MapPage() {
   return (
     <DashboardLayout>
       <MapProvider>
-        {/* Full-screen map container */}
-        <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
+        {/* Full-screen responsive map container */}
+        <div className="relative h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] w-full overflow-hidden">
           {/* Main Map */}
           <Map
             initialLat={mapCenter.lat}
@@ -348,25 +348,25 @@ export default function MapPage() {
             clickMode={clickMode}
           />
 
-          {/* Top Search Panel - Google Maps style */}
-          <div className="absolute top-4 left-4 right-4 z-10">
+          {/* Top Search Panel - Responsive */}
+          <div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-10">
             <Card className="shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Route Planning Icon */}
-                  <div className="flex items-center gap-2 text-blue-600">
+              <CardContent className="p-2 sm:p-4">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-2 lg:gap-4">
+                  {/* Route Planning Icon - Hidden on mobile */}
+                  <div className="hidden lg:flex items-center gap-2 text-blue-600">
                     <Route className="h-5 w-5" />
                     <span className="font-medium text-sm">Route</span>
                   </div>
 
                   {/* Origin and Destination Inputs */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-2 gap-2">
                     <div className="relative">
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full z-10"></div>
                       <div className="pl-8">
                         <AddressAutocomplete
                           onSelectAddress={handleOriginSelect}
-                          placeholder="Choose starting point"
+                          placeholder="Starting point"
                         />
                       </div>
                     </div>
@@ -375,19 +375,19 @@ export default function MapPage() {
                       <div className="pl-8">
                         <AddressAutocomplete
                           onSelectAddress={handleDestinationSelect}
-                          placeholder="Choose destination"
+                          placeholder="Destination"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full lg:w-auto">
                     <Button
                       onClick={handleCalculateRoute}
                       disabled={!origin || !destination || !selectedVehicleId || calculateRoute.isPending}
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 flex-1 lg:flex-none"
                     >
                       {calculateRoute.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -407,7 +407,7 @@ export default function MapPage() {
                       </Button>
                     )}
 
-                    {/* Test button for debugging */}
+                    {/* Test button for debugging - Hidden on mobile */}
                     <Button
                       onClick={() => {
                         // Test with hardcoded route data
@@ -468,6 +468,7 @@ export default function MapPage() {
                       variant="outline"
                       size="sm"
                       title="Test Route"
+                      className="hidden lg:block"
                     >
                       Test
                     </Button>
@@ -477,15 +478,15 @@ export default function MapPage() {
             </Card>
           </div>
 
-          {/* Left Control Panel */}
-          <div className="absolute top-20 left-4 z-10 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4">
+          {/* Left Control Panel - Responsive */}
+          <div className="absolute top-24 sm:top-28 left-2 sm:left-4 z-10 w-[calc(100vw-1rem)] sm:w-80 max-h-[calc(100vh-10rem)] overflow-y-auto space-y-2 sm:space-y-4 lg:block hidden">
             {/* Vehicle Selection */}
             <Card className="shadow-lg">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium">Vehicle</label>
+              <CardContent className="p-2 sm:p-4">
+                <div className="space-y-2 sm:space-y-3">
+                  <label className="text-xs sm:text-sm font-medium">Vehicle</label>
                   <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                       <SelectValue placeholder="Select vehicle" />
                     </SelectTrigger>
                     <SelectContent>
@@ -509,16 +510,16 @@ export default function MapPage() {
 
             {/* Click Mode Controls */}
             <Card className="shadow-lg">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium">Quick Set</label>
+              <CardContent className="p-2 sm:p-4">
+                <div className="space-y-2 sm:space-y-3">
+                  <label className="text-xs sm:text-sm font-medium">Quick Set</label>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant={clickMode === 'origin' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setClickMode(clickMode === 'origin' ? 'none' : 'origin')}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       {clickMode === 'origin' ? 'Cancel' : 'Set Origin'}
                     </Button>
@@ -527,7 +528,7 @@ export default function MapPage() {
                       variant={clickMode === 'destination' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setClickMode(clickMode === 'destination' ? 'none' : 'destination')}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       {clickMode === 'destination' ? 'Cancel' : 'Set Dest'}
                     </Button>
@@ -544,19 +545,19 @@ export default function MapPage() {
             {/* Current Route Info */}
             {(origin || destination) && (
               <Card className="shadow-lg">
-                <CardContent className="p-4">
+                <CardContent className="p-2 sm:p-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Current Route</label>
+                    <label className="text-xs sm:text-sm font-medium">Current Route</label>
                     {origin && typeof origin === 'object' && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                        <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
                         <span className="text-muted-foreground">From:</span>
                         <span className="truncate">{poiMarkers.find(m => m.type === 'origin')?.name || `${origin.lat}, ${origin.lng}`}</span>
                       </div>
                     )}
                     {destination && typeof destination === 'object' && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm">
+                        <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
                         <span className="text-muted-foreground">To:</span>
                         <span className="truncate">{poiMarkers.find(m => m.type === 'destination')?.name || `${destination.lat}, ${destination.lng}`}</span>
                       </div>
@@ -567,15 +568,74 @@ export default function MapPage() {
             )}
           </div>
 
+          {/* Mobile Bottom Sheet for Controls */}
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10 bg-white border-t shadow-lg">
+            <div className="p-4 space-y-4">
+              {/* Vehicle Selection - Mobile */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Vehicle</label>
+                <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehiclesLoading ? (
+                      <SelectItem value="loading" disabled>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </SelectItem>
+                    ) : (
+                      vehicles?.map((vehicle: VehicleResponseDto) => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.nickname || `${vehicle.make} ${vehicle.model}`}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Quick Set Controls - Mobile */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Quick Set</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={clickMode === 'origin' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setClickMode(clickMode === 'origin' ? 'none' : 'origin')}
+                    className="text-xs"
+                  >
+                    {clickMode === 'origin' ? 'Cancel' : 'Set Origin'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={clickMode === 'destination' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setClickMode(clickMode === 'destination' ? 'none' : 'destination')}
+                    className="text-xs"
+                  >
+                    {clickMode === 'destination' ? 'Cancel' : 'Set Dest'}
+                  </Button>
+                </div>
+                {clickMode !== 'none' && (
+                  <p className="text-xs text-muted-foreground">
+                    Click map to set {clickMode}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Station Details Sidebar */}
           <StationDetailsSidebar 
             stationId={selectedStationId}
             onClose={() => setSelectedStationId(null)}
           />
 
-          {/* Right Panel - Route Statistics */}
+          {/* Right Panel - Route Statistics - Desktop Only */}
           {currentRoute && !selectedStationId && (
-            <div className="absolute top-20 right-4 z-10 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4">
+            <div className="hidden xl:block absolute top-24 sm:top-28 right-2 sm:right-4 z-10 w-80 max-h-[calc(100vh-10rem)] overflow-y-auto space-y-4">
               <RouteStatisticsPanel
                 distance={routeStats.distance}
                 duration={routeStats.duration}
@@ -669,6 +729,60 @@ export default function MapPage() {
                   </CardContent>
                 </Card>
               )}
+            </div>
+          )}
+
+          {/* Mobile Route Statistics - Bottom Sheet */}
+          {currentRoute && !selectedStationId && (
+            <div className="xl:hidden absolute bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg max-h-[40vh] overflow-y-auto">
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">Route Statistics</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentRoute(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Compact Route Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <div className="text-lg font-bold text-blue-600">{routeStats.distance}</div>
+                    <div className="text-xs text-muted-foreground">Distance</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-green-600">{routeStats.duration}</div>
+                    <div className="text-xs text-muted-foreground">Duration</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-orange-600">{routeStats.energyConsumption}</div>
+                    <div className="text-xs text-muted-foreground">Energy</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-purple-600">{routeStats.estimatedCost}</div>
+                    <div className="text-xs text-muted-foreground">Cost</div>
+                  </div>
+                </div>
+
+                {/* Additional Details - Collapsible */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Charging Time:</span>
+                    <div className="font-medium">{routeStats.chargingTime}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Final Battery:</span>
+                    <div className="font-medium">{routeStats.batteryLevel}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Charging Stops:</span>
+                    <div className="font-medium">{currentRoute?.chargingStations?.length || 0}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

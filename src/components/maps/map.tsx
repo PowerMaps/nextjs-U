@@ -440,29 +440,31 @@ export function Map({
   }, [onMapClick, clickMode, isLoaded]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px]">
+    <div className="relative w-full h-full min-h-[400px] sm:min-h-[500px]">
       <div ref={mapContainer} className="map-container w-full h-full" />
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="text-gray-600">Loading map...</div>
+          <div className="text-gray-600 text-sm sm:text-base">Loading map...</div>
         </div>
       )}
 
-      {/* Click mode indicator */}
+      {/* Click mode indicator - Responsive */}
       {clickMode !== 'none' && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
+        <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg shadow-lg max-w-[90vw]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">
-              Click on the map to set {clickMode === 'origin' ? 'starting point' : 'destination'}
+            <span className="text-xs sm:text-sm font-medium">
+              Click map to set {clickMode === 'origin' ? 'start' : 'destination'}
             </span>
           </div>
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 z-10 bg-white p-2 rounded shadow-md text-sm">
-        Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
+      {/* Map coordinates - Hidden on mobile */}
+      <div className="hidden sm:block absolute bottom-4 left-4 z-10 bg-white p-2 rounded shadow-md text-xs">
+        Lng: {lng} | Lat: {lat} | Zoom: {zoom}
       </div>
+      
       {isLoaded && (
         <>
           {console.log('Rendering stations:', stations)}
