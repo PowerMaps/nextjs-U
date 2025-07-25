@@ -83,7 +83,7 @@ export function RoutePlanner({ onRouteCalculated, selectedVehicleId }: RoutePlan
         origin: `${origin.latitude},${origin.longitude}`,
         destination: `${destination.latitude},${destination.longitude}`,
         vehicleId,
-        options: routePreferences
+        routeConfig: routePreferences
       };
 
       const result = await calculateRoute.mutateAsync(routeRequest);

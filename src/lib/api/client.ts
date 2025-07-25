@@ -7,16 +7,53 @@ export interface ApiErrorResponse {
   error?: string;
 }
 
+// Token management utilities
+export class TokenManager {
+  private static readonly ACCESS_TOKEN_KEY = 'accessToken';
+  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
+
+  static getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  }
+
+  static getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  static setTokens(accessToken: string, refreshToken: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
+    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+  }
+
+  static clearTokens(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  static hasValidToken(): boolean {
+    return !!this.getAccessToken();
+  }
+}
+
 // Create API client class
 class ApiClient {
   private client: AxiosInstance;
   private static instance: ApiClient;
 
   private constructor() {
+    const authStore = 'auth-store';
+    const authData = typeof window !== 'undefined' ? localStorage.getItem(authStore) : null;
+    const token = authData ? JSON.parse(authData)?.state?.accessToken : null;
+    
     this.client = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5500/api/v1',
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
       },
       timeout: 10000,
     });
@@ -24,13 +61,35 @@ class ApiClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        // Get token from localStorage if we're in the browser
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('accessToken');
+        // Define endpoints that don't require authentication
+        const publicEndpoints = [
+          '/auth/login',
+          '/auth/register',
+          '/auth/refresh',
+          '/auth/forgot-password',
+          '/auth/reset-password',
+        ];
+
+        // Check if current request is to a public endpoint
+        const isPublicEndpoint = publicEndpoints.some((endpoint) => config.url?.includes(endpoint));
+
+        // Add auth header for protected endpoints only
+        if (!isPublicEndpoint && typeof window !== 'undefined') {
+          const authData = localStorage.getItem('auth-store');
+          const token = authData ? JSON.parse(authData)?.state?.accessToken : null;
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
           }
         }
+
+        // Add request timestamp for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
+            hasAuth: !isPublicEndpoint && !!token,
+            timestamp: new Date().toISOString(),
+          });
+        }
+
         return config;
       },
       (error) => Promise.reject(error)
@@ -47,8 +106,10 @@ class ApiClient {
           originalRequest._retry = true;
 
           try {
-            // Try to refresh token
-            const refreshToken = localStorage.getItem('refreshToken');
+            // Try to refresh token from auth store
+            const authData = typeof window !== 'undefined' ? localStorage.getItem('auth-store') : null;
+            const refreshToken = authData ? JSON.parse(authData)?.state?.refreshToken : null;
+            
             if (!refreshToken) {
               throw new Error('No refresh token available');
             }
@@ -57,8 +118,17 @@ class ApiClient {
               refreshToken,
             });
 
-            const { accessToken } = response.data;
-            localStorage.setItem('accessToken', accessToken);
+            const { accessToken, refreshToken: newRefreshToken } = response.data;
+            
+            // Update auth store with new tokens
+            if (typeof window !== 'undefined' && authData) {
+              const authState = JSON.parse(authData);
+              authState.state.accessToken = accessToken;
+              if (newRefreshToken) {
+                authState.state.refreshToken = newRefreshToken;
+              }
+              localStorage.setItem('auth-store', JSON.stringify(authState));
+            }
 
             // Retry the original request with new token
             if (originalRequest.headers) {
@@ -66,11 +136,10 @@ class ApiClient {
             }
             return this.client(originalRequest);
           } catch (refreshError) {
-            // If refresh fails, log out the user
+            // If refresh fails, clear auth store and redirect
             if (typeof window !== 'undefined') {
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              // window.location.href = '/auth/login?session=expired';
+              localStorage.removeItem('auth-store');
+              window.location.href = '/auth/login?session=expired';
             }
             return Promise.reject(refreshError);
           }

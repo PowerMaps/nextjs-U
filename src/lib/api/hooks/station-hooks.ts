@@ -39,7 +39,7 @@ export function useChargingStations(params: PaginationQueryDto & {
   // Handle success case
   if (query.data && !query.error) {
     const offlineStations = offlineStorage.getItem(OFFLINE_STATIONS_KEY) || {};
-    query.data.items.forEach((station: ChargingStationResponseDto) => {
+    query.data.items?.forEach((station: ChargingStationResponseDto) => {
       offlineStations[station.id] = station;
     });
     offlineStorage.setItem(OFFLINE_STATIONS_KEY, offlineStations);

@@ -13,6 +13,7 @@ interface ChargingStation {
 interface ChargingStationMarkersProps {
   map: google.maps.Map | null;
   stations: ChargingStation[];
+  onStationClick?: (stationId: string) => void;
 }
 
 const getMarkerColor = (status: ChargingStation['status']) => {
@@ -39,7 +40,7 @@ const createMarkerIcon = (color: string) => {
   };
 };
 
-export function ChargingStationMarkers({ map, stations }: ChargingStationMarkersProps) {
+export function ChargingStationMarkers({ map, stations, onStationClick }: ChargingStationMarkersProps) {
   const markersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
@@ -56,7 +57,9 @@ export function ChargingStationMarkers({ map, stations }: ChargingStationMarkers
     }
 
     // Create info window
-    infoWindowRef.current = new google.maps.InfoWindow();
+    infoWindowRef.current = new google.maps.InfoWindow({
+      maxWidth: 300,
+    });
 
     // Add new markers
     stations.forEach(station => {
@@ -70,12 +73,68 @@ export function ChargingStationMarkers({ map, stations }: ChargingStationMarkers
       // Add click listener for info window
       marker.addListener('click', () => {
         if (infoWindowRef.current) {
+          const statusColor = getMarkerColor(station.status);
+          const statusText = station.status.charAt(0).toUpperCase() + station.status.slice(1);
+          
           infoWindowRef.current.setContent(`
-            <div>
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${station.name}</h3>
-              <p style="margin: 0; font-size: 14px;">Status: <span style="color: ${getMarkerColor(station.status)}; font-weight: bold;">${station.status}</span></p>
+            <div style="padding: 12px; min-width: 250px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 8px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937; flex: 1;">${station.name}</h3>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <span style="
+                  display: inline-flex; 
+                  align-items: center; 
+                  gap: 4px;
+                  padding: 4px 8px; 
+                  border-radius: 12px; 
+                  font-size: 12px; 
+                  font-weight: 500;
+                  background-color: ${statusColor}20;
+                  color: ${statusColor};
+                  border: 1px solid ${statusColor}40;
+                ">
+                  <span style="
+                    width: 6px; 
+                    height: 6px; 
+                    border-radius: 50%; 
+                    background-color: ${statusColor};
+                  "></span>
+                  ${statusText}
+                </span>
+              </div>
+              
+              <div style="margin-bottom: 12px;">
+                <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4;">
+                  Click "View Details" to see connector availability and book a charging session.
+                </p>
+              </div>
+              
+              <div style="display: flex; gap: 8px;">
+                <button 
+                  onclick="window.handleStationDetailsClick('${station.id}')"
+                  style="
+                    flex: 1;
+                    padding: 8px 16px;
+                    background-color: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                  "
+                  onmouseover="this.style.backgroundColor='#2563eb'"
+                  onmouseout="this.style.backgroundColor='#3b82f6'"
+                >
+                  View Details & Book
+                </button>
+              </div>
             </div>
           `);
+          
           infoWindowRef.current.open(map, marker);
         }
       });
@@ -83,14 +142,26 @@ export function ChargingStationMarkers({ map, stations }: ChargingStationMarkers
       markersRef.current.push(marker);
     });
 
+    // Set up global handler for station details click
+    (window as any).handleStationDetailsClick = (stationId: string) => {
+      if (onStationClick) {
+        onStationClick(stationId);
+      }
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+      }
+    };
+
     return () => {
       markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
       }
+      // Clean up global handler
+      delete (window as any).handleStationDetailsClick;
     };
-  }, [map, stations]);
+  }, [map, stations, onStationClick]);
 
   return null;
 }

@@ -149,7 +149,7 @@ export interface RouteRequestDto {
   origin: string | Coordinates;
   destination: string | Coordinates;
   vehicleId: string;
-  options?: RouteOptions;
+  routeConfig?: RouteOptions;
 }
 
 export interface Coordinates {
@@ -208,20 +208,17 @@ export interface StationCostDetail {
 export interface ChargingStationResponseDto {
   id: string;
   name: string;
-  location: {
-    type: string;
-    coordinates: [number, number]; // [longitude, latitude]
-  };
   address: string;
-  city: string;
-  status: 'OPERATIONAL' | 'LIMITED' | 'MAINTENANCE' | 'OFFLINE';
+  latitude: number;
+  longitude: number;
+  type: 'public' | 'private' | 'semi_public' | 'workplace' | 'residential';
+  description?: string;
+  isActive: boolean;
+  openingTime?: string;
+  closingTime?: string;
+  isVerified: boolean;
+  rate?: number;
   connectors: ConnectorResponseDto[];
-  amenities: string[];
-  openingHours: string;
-  operator: string;
-  pricing: PricingResponseDto[];
-  rating: number;
-  reviews: ReviewResponseDto[];
   createdAt: string;
   updatedAt: string;
 }
@@ -232,6 +229,28 @@ export interface ConnectorResponseDto {
   power: number;
   status: 'AVAILABLE' | 'IN_USE' | 'OFFLINE' | 'RESERVED';
   station: ChargingStationResponseDto;
+  pricePerKwh?: number;
+}
+
+export interface BookingRequestDto {
+  connectorId: string;
+  startTime: string; // ISO date string
+  endTime: string; // ISO date string
+  estimatedEnergyNeeded?: number; // kWh
+}
+
+export interface BookingResponseDto {
+  id: string;
+  connectorId: string;
+  connector: ConnectorResponseDto;
+  userId: string;
+  startTime: string;
+  endTime: string;
+  estimatedEnergyNeeded?: number;
+  status: 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  totalCost?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PricingResponseDto {

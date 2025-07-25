@@ -52,23 +52,11 @@ export function AddressAutocomplete({
   useEffect(() => {
     const initializeServices = async () => {
       try {
-        // Load Google Maps API if not already loaded
-        if (!window.google?.maps?.places) {
-          const { Loader } = await import('@googlemaps/js-api-loader');
-          const loader = new Loader({
-            apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-            version: 'weekly',
-            libraries: ['places']
-          });
-          await loader.load();
-        }
-
-        // Initialize services
-        autocompleteService.current = new google.maps.places.AutocompleteService();
-
-        // Create a dummy div for PlacesService (it requires a map or div)
-        const dummyDiv = document.createElement('div');
-        placesService.current = new google.maps.places.PlacesService(dummyDiv);
+        const { initializeGooglePlacesServices } = await import('@/lib/maps/google-maps-loader');
+        const services = await initializeGooglePlacesServices();
+        
+        autocompleteService.current = services.autocompleteService;
+        placesService.current = services.placesService;
       } catch (error) {
         console.error('Error initializing Google Places services:', error);
         setError('Failed to initialize location services');
@@ -418,7 +406,7 @@ export function AddressAutocomplete({
                     <div className="flex items-center">
                       <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                       <div className="min-w-0">
-                        <div className="font-medium truncate">{suggestion.structured_formatting.main_text}</div>
+                        <div className="font-medium text-gray-500 truncate">{suggestion.structured_formatting.main_text} </div>
                         <div className="text-xs text-gray-500 truncate">{suggestion.structured_formatting.secondary_text}</div>
                       </div>
                     </div>

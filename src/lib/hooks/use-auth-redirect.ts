@@ -12,8 +12,8 @@ export function useAuthRedirect() {
   const [hasRedirected, setHasRedirected] = useState(false);
 
   // Get return URL from search params
-  const returnUrl = searchParams.get('returnUrl');
-  const reason = searchParams.get('reason');
+  const returnUrl = searchParams?.get('returnUrl');
+  const reason = searchParams?.get('reason');
 
   // Redirect after successful authentication
   useEffect(() => {

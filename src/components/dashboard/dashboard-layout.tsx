@@ -18,7 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
+      <div className="flex flex-col flex-1 ">
         {/* <Navbar onMenuClick={handleMenuClick} /> */}
         <main className="flex-1 p-8">
           {children}
