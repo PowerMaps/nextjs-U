@@ -509,12 +509,16 @@ export function Map({
       <div className="hidden sm:block absolute bottom-4 left-4 z-10 bg-white p-2 rounded shadow-md text-xs">
         Lng: {lng} | Lat: {lat} | Zoom: {zoom}
       </div>
-      
+
       {isLoaded && (
         <>
-          {console.log('Rendering stations:', stations)}
-          <ChargingStationMarkers 
-            map={map.current} 
+          {console.log('Map component - isLoaded:', isLoaded)}
+          {console.log('Map component - map.current:', map.current)}
+          {console.log('Map component - stations:', stations)}
+          {console.log('Map component - stations length:', stations?.length)}
+          {console.log('Map component - onStationClick:', onStationClick)}
+          <ChargingStationMarkers
+            map={map.current}
             stations={stations}
             onStationClick={onStationClick}
           />

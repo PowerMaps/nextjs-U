@@ -8,6 +8,7 @@ interface ChargingStation {
   longitude: number;
   latitude: number;
   status: 'available' | 'occupied' | 'offline';
+  isUserOwned?: boolean;
 }
 
 interface ChargingStationMarkersProps {
@@ -16,7 +17,11 @@ interface ChargingStationMarkersProps {
   onStationClick?: (stationId: string) => void;
 }
 
-const getMarkerColor = (status: ChargingStation['status']) => {
+const getMarkerColor = (status: ChargingStation['status'], isUserOwned?: boolean) => {
+  if (isUserOwned) {
+    return '#2196F3'; // Blue for user-owned stations
+  }
+  
   switch (status) {
     case 'available':
       return '#4CAF50'; // Green
@@ -45,6 +50,10 @@ export function ChargingStationMarkers({ map, stations, onStationClick }: Chargi
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
   useEffect(() => {
+    console.log('ChargingStationMarkers - map:', map);
+    console.log('ChargingStationMarkers - stations:', stations);
+    console.log('ChargingStationMarkers - stations count:', stations.length);
+    
     if (!map) return;
 
     // Remove existing markers
@@ -62,18 +71,20 @@ export function ChargingStationMarkers({ map, stations, onStationClick }: Chargi
     });
 
     // Add new markers
-    stations.forEach(station => {
+    console.log('Creating markers for stations:', stations);
+    stations.forEach((station, index) => {
+      console.log(`Creating marker ${index + 1}:`, station);
       const marker = new google.maps.Marker({
-        position: { lat: station.latitude, lng: station.longitude },
+        position: { lat: typeof  station.latitude == 'string' ? Number(station.latitude) :station.latitude, lng: typeof station.longitude == 'string'?Number(station.longitude): station.longitude },
         map: map,
         title: station.name,
-        icon: createMarkerIcon(getMarkerColor(station.status)),
+        icon: createMarkerIcon(getMarkerColor(station.status, station.isUserOwned)),
       });
 
       // Add click listener for info window
       marker.addListener('click', () => {
         if (infoWindowRef.current) {
-          const statusColor = getMarkerColor(station.status);
+          const statusColor = getMarkerColor(station.status, station.isUserOwned);
           const statusText = station.status.charAt(0).toUpperCase() + station.status.slice(1);
           
           infoWindowRef.current.setContent(`
@@ -140,12 +151,19 @@ export function ChargingStationMarkers({ map, stations, onStationClick }: Chargi
       });
 
       markersRef.current.push(marker);
+      console.log(`Marker ${index + 1} created and added to map`);
     });
+    
+    console.log(`Total markers created: ${markersRef.current.length}`);
 
     // Set up global handler for station details click
     (window as any).handleStationDetailsClick = (stationId: string) => {
+      console.log('Station clicked:', stationId);
       if (onStationClick) {
+        console.log('Calling onStationClick with:', stationId);
         onStationClick(stationId);
+      } else {
+        console.log('No onStationClick handler provided');
       }
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
