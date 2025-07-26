@@ -9,7 +9,10 @@ interface RouteStatisticsPanelProps {
   energyConsumption: string;
 }
 
-export function RouteStatisticsPanel({ distance, duration, energyConsumption }: RouteStatisticsPanelPanelProps) {
+export function RouteStatisticsPanel({ distance, duration, energyConsumption }: RouteStatisticsPanelProps) {
+  const cleanedenergyConsumption = typeof energyConsumption === 'string'
+  ? energyConsumption.split('.')[0]
+  : energyConsumption;
   return (
     <Card>
       <CardHeader>
@@ -26,7 +29,7 @@ export function RouteStatisticsPanel({ distance, duration, energyConsumption }: 
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Energy Consumption</p>
-          <p className="text-lg font-semibold">{energyConsumption}</p>
+          <p className="text-lg font-semibold">{(cleanedenergyConsumption)}</p>
         </div>
       </CardContent>
     </Card>

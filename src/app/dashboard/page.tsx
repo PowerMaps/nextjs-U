@@ -78,7 +78,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {walletLoading ? '...' : `€${walletBalance.toFixed(2)}`}
+                {walletLoading ? '...' : `€${walletBalance}`}
               </div>
               <p className="text-xs text-muted-foreground">
                 Available balance
@@ -291,9 +291,10 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {notifications && notifications.items.length > 0 ? (
+
+                {notifications && notifications?.items?.length > 0 ? (
                   <div className="space-y-3">
-                    {notifications.items.slice(0, 3).map((notification) => (
+                    {notifications.items?.slice(0, 3)?.map((notification) => (
                       <div key={notification.id} className="p-2 border rounded-lg">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">

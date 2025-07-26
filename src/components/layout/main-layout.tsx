@@ -20,6 +20,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const { updateLastActivity } = useAuthStore();
 
+  // Check if current route should hide sidebar
+  const shouldHideSidebar = pathname === '/dashboard/map';
+
   // Track user activity
   useEffect(() => {
     const events = ["mousemove", "keydown", "mousedown", "touchstart"];
@@ -31,7 +34,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
       events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
   }, [updateLastActivity]);
-""
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -40,25 +42,34 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      
+      {!shouldHideSidebar && <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />}
+
       <div className="flex flex-1">
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-        
-        <main 
+        {!shouldHideSidebar && <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />}
+
+        <main
           className={cn(
-            "flex-1 overflow-auto transition-all duration-300",
-            sidebarOpen ? "md:ml-64" : "md:ml-16"
+            "flex-1 transition-all duration-300",
+            shouldHideSidebar
+              ? "overflow-hidden"
+              : "overflow-auto",
+            !shouldHideSidebar && (sidebarOpen ? "md:ml-64" : "md:ml-16")
           )}
         >
-          <div className="container mx-auto px-4 py-8">
-            {children}
-          </div>
-          <Footer />
+          {shouldHideSidebar ? (
+            children
+          ) : (
+            <>
+              <div className="container mx-auto px-4 py-8">
+                {children}
+              </div>
+              <Footer />
+            </>
+          )}
         </main>
       </div>
-      
-        {/* Offline status indicator */}
+
+      {/* Offline status indicator */}
       <OfflineIndicator />
       <SessionTimeoutModal />
     </div>

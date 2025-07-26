@@ -167,17 +167,62 @@ export function Map({
         await loadGoogleMaps();
 
         if (mapContainer.current) {
-          map.current = new google.maps.Map(mapContainer.current, {
-            center: { lat, lng },
-            zoom: zoom,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
+          const mapOptions: google.maps.MapOptions = {
+            center: { lat: 36.8008, lng: 10.1815 }, // Tunis center
+            zoom: 13,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            disableDefaultUI: true,
             zoomControl: true,
-            styles: getMapStyle(mapTheme),
-            gestureHandling: 'cooperative',
-            clickableIcons: false,
-          });
+            scaleControl: true,
+            streetViewControl: true,
+            rotateControl: false,
+            clickableIcons: true,
+            gestureHandling: 'greedy',
+            styles: [
+              {
+                featureType: 'poi.business',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }],
+              },
+              {
+                featureType: 'transit',
+                elementType: 'labels.icon',
+                stylers: [{ visibility: 'off' }],
+              },
+              {
+                featureType: 'road',
+                elementType: 'geometry',
+                stylers: [{ color: '#f5f1e6' }],
+              },
+              {
+                featureType: 'road.arterial',
+                elementType: 'geometry',
+                stylers: [{ color: '#fdfcf8' }],
+              },
+              {
+                featureType: 'road.highway',
+                elementType: 'geometry',
+                stylers: [{ color: '#f8f5f0' }],
+              },
+              {
+                featureType: 'poi',
+                elementType: 'labels.text.fill',
+                stylers: [{ color: '#757575' }],
+              },
+              {
+                featureType: 'poi.park',
+                elementType: 'geometry',
+                stylers: [{ color: '#c5dac6' }],
+              },
+              {
+                featureType: 'water',
+                elementType: 'all',
+                stylers: [{ color: '#46bcec' }, { visibility: 'on' }],
+              },
+            ],
+          };
+
+          map.current = new google.maps.Map(mapContainer.current, mapOptions);
 
           // Add event listeners for map changes
           map.current.addListener('center_changed', () => {
@@ -214,13 +259,13 @@ export function Map({
   const routePolylineRef = useRef<google.maps.Polyline | null>(null);
 
   // Update map theme when theme prop changes
-  useEffect(() => {
-    if (map.current && isLoaded) {
-      map.current.setOptions({
-        styles: getMapStyle(mapTheme)
-      });
-    }
-  }, [mapTheme, isLoaded]);
+  // useEffect(() => {
+  //   if (map.current && isLoaded) {
+  //     map.current.setOptions({
+  //       styles: getMapStyle(mapTheme)
+  //     });
+  //   }
+  // }, [mapTheme, isLoaded]);
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;
