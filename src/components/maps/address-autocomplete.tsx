@@ -327,62 +327,7 @@ export function AddressAutocomplete({
           )}
 
           {/* History Items */}
-          {!isLoading && filteredHistoryItems.length > 0 && (
-            <div>
-              <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50 border-b">
-                {searchTerm ? 'Matching History' : 'Recent & Saved'}
-              </div>
-              {filteredHistoryItems.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center justify-between p-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${focusedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-100'
-                    }`}
-                  role="option"
-                  aria-selected={focusedIndex === index}
-                  onClick={() => handleSelectHistoryItem(item)}
-                >
-                  <div className="flex items-center flex-1 min-w-0">
-                    {item.type === 'recent' ? (
-                      <Clock className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                    ) : (
-                      <Star className="h-4 w-4 text-yellow-500 mr-2 flex-shrink-0" />
-                    )}
-                    <span className="truncate">{item.name}</span>
-                  </div>
-                  <div className="flex items-center ml-2">
-                    {item.type === 'recent' && !isLocationSaved(item) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveLocation(item);
-                        }}
-                        title="Save location"
-                      >
-                        <Star className="h-3 w-3" />
-                      </Button>
-                    )}
-                    {item.type === 'saved' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveSavedLocation(item.id);
-                        }}
-                        title="Remove saved location"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        
 
           {/* Search Suggestions */}
           {!isLoading && suggestions.length > 0 && (
@@ -427,3 +372,59 @@ export function AddressAutocomplete({
     </div>
   );
 }
+
+// {!isLoading && filteredHistoryItems.length > 0 && (
+//   <div>
+//     <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50 border-b">
+//       {searchTerm ? 'Matching History' : 'Recent & Saved'}
+//     </div>
+//     {filteredHistoryItems.map((item, index) => (
+      
+//       <div
+//         key={item.id}
+//         className={`flex items-center justify-between p-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${focusedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-100'
+//           }`}
+//         role="option"
+//         aria-selected={focusedIndex === index}
+//         onClick={() => handleSelectHistoryItem(item)}
+//       >
+
+//         {item.name}
+//         <div className="flex items-center flex-1 min-w-0">
+          
+//           <span className="truncate">{item.name}</span>
+//         </div>
+//         {/* <div className="flex items-center ml-2">
+//           {item.type === 'recent' && !isLocationSaved(item) && (
+//             <Button
+//               variant="ghost"
+//               size="sm"
+//               className="h-6 w-6 p-0"
+//               onClick={(e) => {
+//                 e.stopPropagation();
+//                 handleSaveLocation(item);
+//               }}
+//               title="Save location"
+//             >
+//               <Star className="h-3 w-3" />
+//             </Button>
+//           )}
+//           {item.type === 'saved' && (
+//             <Button
+//               variant="ghost"
+//               size="sm"
+//               className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+//               onClick={(e) => {
+//                 e.stopPropagation();
+//                 handleRemoveSavedLocation(item.id);
+//               }}
+//               title="Remove saved location"
+//             >
+//               <X className="h-3 w-3" />
+//             </Button>
+//           )}
+//         </div> */}
+//       </div>
+//     ))}
+//   </div>
+// )}

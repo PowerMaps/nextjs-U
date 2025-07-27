@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ConnectorType } from "@/lib/api/hooks/user-station-hooks";
+import { CreateVehicleDto } from "@/lib/api/types";
 
 interface VehicleFormProps {
-  initialData?: VehicleFormValues;
-  onSubmit: (data: VehicleFormValues) => void;
+  initialData?: CreateVehicleDto;
+  onSubmit: (data: CreateVehicleDto) => void;
   isLoading?: boolean;
 }
 
@@ -26,20 +28,29 @@ const vehicleSchema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   year: z.number().min(1900).max(new Date().getFullYear() + 1),
-  licensePlate: z.string().min(1, "License plate is required"),
-  vin: z.string().optional(),
-  batteryCapacity: z.number().optional(),
-  chargingPortType: z.string().optional(),
+  licensePlate: z.string().optional(),
+  batteryCapacity: z.number().min(1, "Battery capacity is required"),
+  range: z.number().min(1, "Range is required"),
+  efficiency: z.number().min(0.1, "Efficiency is required"),
+  connectorType: z.nativeEnum(ConnectorType),
+  chargingPower: z.number().min(1, "Charging power is required"),
 });
+
+const CONNECTOR_TYPE_OPTIONS = [
+  { value: ConnectorType.TYPE_2, label: 'Type 2' },
+  { value: ConnectorType.CCS, label: 'CCS' },
+  { value: ConnectorType.CHADEMO, label: 'CHAdeMO' },
+  { value: ConnectorType.TESLA, label: 'Tesla' },
+];
 
 export type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormProps) {
-  const { toast } = useToast();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
@@ -48,9 +59,11 @@ export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormPro
       model: "",
       year: new Date().getFullYear(),
       licensePlate: "",
-      vin: "",
-      batteryCapacity: undefined,
-      chargingPortType: "",
+      batteryCapacity: 0,
+      range: 0,
+      efficiency: 0,
+      connectorType: ConnectorType.TYPE_2,
+      chargingPower: 0,
     },
   });
 
@@ -90,31 +103,84 @@ export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormPro
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="licensePlate">License Plate</Label>
+            <Label htmlFor="licensePlate">License Plate (Optional)</Label>
             <Input id="licensePlate" type="text" {...register("licensePlate")} />
             {errors.licensePlate && (
               <p className="text-sm text-destructive">{errors.licensePlate.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="vin">VIN (Optional)</Label>
-            <Input id="vin" type="text" {...register("vin")} />
-            {errors.vin && (
-              <p className="text-sm text-destructive">{errors.vin.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="batteryCapacity">Battery Capacity (kWh, Optional)</Label>
-            <Input id="batteryCapacity" type="number" {...register("batteryCapacity", { valueAsNumber: true })} />
+            <Label htmlFor="batteryCapacity">Battery Capacity (kWh) *</Label>
+            <Input
+              id="batteryCapacity"
+              type="number"
+              step="0.1"
+              placeholder="e.g., 75.0"
+              {...register("batteryCapacity", { valueAsNumber: true })}
+            />
             {errors.batteryCapacity && (
               <p className="text-sm text-destructive">{errors.batteryCapacity.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="chargingPortType">Charging Port Type (Optional)</Label>
-            <Input id="chargingPortType" type="text" {...register("chargingPortType")} />
-            {errors.chargingPortType && (
-              <p className="text-sm text-destructive">{errors.chargingPortType.message}</p>
+            <Label htmlFor="range">Range (km) *</Label>
+            <Input
+              id="range"
+              type="number"
+              placeholder="e.g., 400"
+              {...register("range", { valueAsNumber: true })}
+            />
+            {errors.range && (
+              <p className="text-sm text-destructive">{errors.range.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="efficiency">Efficiency (kWh/100km) *</Label>
+            <Input
+              id="efficiency"
+              type="number"
+              step="0.1"
+              placeholder="e.g., 18.5"
+              {...register("efficiency", { valueAsNumber: true })}
+            />
+            {errors.efficiency && (
+              <p className="text-sm text-destructive">{errors.efficiency.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="chargingPower">Charging Power (kW) *</Label>
+            <Input
+              id="chargingPower"
+              type="number"
+              placeholder="e.g., 150"
+              {...register("chargingPower", { valueAsNumber: true })}
+            />
+            {errors.chargingPower && (
+              <p className="text-sm text-destructive">{errors.chargingPower.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="connectorType">Connector Type *</Label>
+            <Controller
+              name="connectorType"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select connector type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONNECTOR_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.connectorType && (
+              <p className="text-sm text-destructive">{errors.connectorType.message}</p>
             )}
           </div>
           <Button type="submit" disabled={isLoading}>

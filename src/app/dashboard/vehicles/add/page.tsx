@@ -1,27 +1,34 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { VehicleForm, VehicleFormValues } from '@/components/vehicles/vehicle-form';
-import { useToast } from '@/components/ui/use-toast';
+import { useCreateVehicle } from '@/lib/api/hooks/vehicle-hooks';
+import { CreateVehicleDto } from '@/lib/api/types';
 
 export default function AddVehiclePage() {
-  const { toast } = useToast();
+  const router = useRouter();
+  const createVehicleMutation = useCreateVehicle();
 
-  const handleSubmit = (data: VehicleFormValues) => {
-    // In a real application, you would send this data to your API
-    console.log("New Vehicle Data:", data);
-    toast({
-      title: "Vehicle Added",
-      description: `Vehicle ${data.make} ${data.model} added successfully!`,
-    });
-    // Optionally, redirect to the vehicle list page
+  const handleSubmit = async (data: CreateVehicleDto) => {
+    try {
+      await createVehicleMutation.mutateAsync(data);
+      // Redirect to vehicles list page after successful creation
+      router.push('/dashboard/vehicles');
+    } catch (error) {
+      // Error handling is done in the mutation hook
+      console.error('Failed to create vehicle:', error);
+    }
   };
 
   return (
     <DashboardLayout>
       <h1 className="text-3xl font-bold mb-6">Add New Vehicle</h1>
-      <VehicleForm onSubmit={handleSubmit} />
+      <VehicleForm 
+        onSubmit={handleSubmit} 
+        isLoading={createVehicleMutation.isPending}
+      />
     </DashboardLayout>
   );
 }

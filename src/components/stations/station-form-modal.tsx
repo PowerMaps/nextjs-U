@@ -22,7 +22,7 @@ import {
   Loader2
 } from 'lucide-react';
 
-enum ConnectorType {
+export enum ConnectorType {
   TYPE_2 = 'type_2',
   CCS = 'ccs',
   CHADEMO = 'chademo',

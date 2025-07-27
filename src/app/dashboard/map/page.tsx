@@ -20,10 +20,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Route, Zap, X, ArrowLeft, Menu } from 'lucide-react';
 import { MapProvider } from '@/lib/contexts/map-context';
+import { NavigationProvider, useNavigation } from '@/lib/contexts/navigation-context';
+import { NavigationPanel } from '@/components/maps/navigation-panel';
+import { NavigationInstructionOverlay } from '@/components/maps/navigation-instruction-overlay';
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 
-export default function MapPage() {
+function MapPageContent() {
   // State for route planning
   const [origin, setOrigin] = useState<string | Coordinates>('');
   const [destination, setDestination] = useState<string | Coordinates>('');
@@ -46,6 +49,9 @@ export default function MapPage() {
   const { data: nearbyStations } = useNearbyStations(mapCenter.lat, mapCenter.lng, 25);
   const calculateRoute = useCalculateRoute();
   const { toast } = useToast();
+  
+  // Navigation hooks
+  const navigation = useNavigation();
 
   // Debug nearby stations data
   useEffect(() => {
@@ -304,7 +310,7 @@ export default function MapPage() {
   const routeStats = getRouteStats();
   
   return (
-    <MapProvider>
+    <>
       {/* Full-screen map container */}
       <div className={`relative h-screen overflow-hidden bg-gray-100 transition-all duration-300 ${selectedStationId ? 'w-[calc(100vw-320px)]' : 'w-screen'
         }`}>
@@ -352,6 +358,9 @@ export default function MapPage() {
           onStationClick={(stationId) => setSelectedStationId(stationId)}
           clickMode={clickMode}
         />
+
+        {/* Navigation Instruction Overlay */}
+        <NavigationInstructionOverlay route={currentRoute?.route} />
 
         {/* Top Navigation Bar */}
         <div className="absolute top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b shadow-sm">
@@ -610,9 +619,21 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Right Panel - Route Statistics */}
+        {/* Right Panel - Route Statistics and Navigation */}
         {currentRoute && !selectedStationId && showPanels && (
           <div className="absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
+            {/* Navigation Panel */}
+            <NavigationPanel
+              route={currentRoute.route}
+              isNavigating={navigation.isNavigating}
+              onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
+              onStopNavigation={navigation.stopNavigation}
+              onPauseNavigation={navigation.pauseNavigation}
+              onResumeNavigation={navigation.resumeNavigation}
+              currentStepIndex={navigation.currentStepIndex}
+              onStepChange={navigation.setCurrentStep}
+            />
+            
             <RouteStatisticsPanel
               distance={routeStats.distance}
               duration={routeStats.duration}
@@ -822,7 +843,44 @@ export default function MapPage() {
                 </Card>
               </div>
             )} */}
+
+        {/* Mobile Navigation and Route Statistics - Bottom Sheet */}
+        {currentRoute && showPanels && (
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg max-h-[50vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
+              {/* Navigation Panel - Mobile */}
+              <NavigationPanel
+                route={currentRoute.route}
+                isNavigating={navigation.isNavigating}
+                onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
+                onStopNavigation={navigation.stopNavigation}
+                onPauseNavigation={navigation.pauseNavigation}
+                onResumeNavigation={navigation.resumeNavigation}
+                currentStepIndex={navigation.currentStepIndex}
+                onStepChange={navigation.setCurrentStep}
+              />
+              
+              <RouteStatisticsPanel
+                distance={routeStats.distance}
+                duration={routeStats.duration}
+                energyConsumption={routeStats.energyConsumption}
+                estimatedCost={routeStats.estimatedCost}
+                chargingStops={currentRoute?.chargingStations?.length || 0}
+              />
+            </div>
+          </div>
+        )}
       </div>
-    </MapProvider>
+    </>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <NavigationProvider>
+      <MapProvider>
+        <MapPageContent />
+      </MapProvider>
+    </NavigationProvider>
   );
 }

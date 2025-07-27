@@ -1,5 +1,7 @@
 // Common types used across API interfaces
 
+import { ConnectorType } from "../hooks/user-station-hooks";
+
 export interface PaginationQueryDto {
   page?: number;
   limit?: number;
@@ -123,11 +125,10 @@ export interface CreateVehicleDto {
   model: string;
   year: number;
   licensePlate?: string;
-  nickname?: string;
   batteryCapacity: number;
   range: number;
   efficiency: number;
-  connectorType: string;
+  connectorType: ConnectorType;
   chargingPower: number;
 }
 

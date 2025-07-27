@@ -17,9 +17,11 @@ import {
   Zap,
   RotateCcw,
   Route as RouteIcon,
-  Navigation2
+  Navigation2,
+  Square
 } from 'lucide-react';
 import { useMapContext } from '@/lib/contexts/map-context';
+import { useNavigation } from '@/lib/contexts/navigation-context';
 
 interface MapControlsProps {
   map: google.maps.Map | null;
@@ -27,6 +29,7 @@ interface MapControlsProps {
   onLayersClick?: () => void;
   onNavigationClick?: () => void;
   onFullscreenClick?: () => void;
+  route?: any;
 }
 
 export function MapControls({
@@ -34,9 +37,11 @@ export function MapControls({
   onLocationClick,
   onLayersClick,
   onNavigationClick,
-  onFullscreenClick
+  onFullscreenClick,
+  route
 }: MapControlsProps) {
   const { theme, setTheme, showTraffic, setShowTraffic, showTransit, setShowTransit, mapType, setMapType } = useMapContext();
+  const { isNavigating, startNavigation, stopNavigation } = useNavigation();
   const [trafficLayer, setTrafficLayer] = useState<google.maps.TrafficLayer | null>(null);
   const [transitLayer, setTransitLayer] = useState<google.maps.TransitLayer | null>(null);
   const handleMyLocation = () => {
@@ -150,6 +155,16 @@ export function MapControls({
     onNavigationClick?.();
   };
 
+  const handleNavigationToggle = () => {
+    if (!route) return;
+    
+    if (isNavigating) {
+      stopNavigation();
+    } else {
+      startNavigation(route);
+    }
+  };
+
   const handleFullscreen = () => {
     const mapContainer = map?.getDiv().parentElement;
     if (!mapContainer) return;
@@ -230,6 +245,25 @@ export function MapControls({
       >
         <Bus className="h-4 w-4" />
       </Button>
+
+      {/* Navigation Start/Stop Button */}
+      {route && (
+        <Button
+          variant="outline"
+          size="icon"
+          className={`backdrop-blur-sm shadow-lg hover:bg-gray-50 border-gray-200 ${
+            isNavigating ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+          }`}
+          onClick={handleNavigationToggle}
+          title={isNavigating ? "Stop Navigation" : "Start Navigation"}
+        >
+          {isNavigating ? (
+            <Square className="h-4 w-4" />
+          ) : (
+            <Navigation className="h-4 w-4" />
+          )}
+        </Button>
+      )}
 
       <Button
         variant="outline"

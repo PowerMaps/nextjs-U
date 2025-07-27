@@ -6,6 +6,7 @@ import { MapControls } from './map-controls';
 
 import { getMapStyle, MapTheme } from '@/lib/maps/map-themes';
 import { useMapContext } from '@/lib/contexts/map-context';
+import { useNavigation } from '@/lib/contexts/navigation-context';
 
 // Utility function to decode Google Maps polyline
 function decodePolyline(encoded: string): google.maps.LatLng[] {
@@ -148,6 +149,7 @@ export function Map({
   clickMode = 'none'
 }: MapProps) {
   const { theme } = useMapContext();
+  const { currentLocation, isNavigating } = useNavigation();
   const mapTheme = propTheme || theme;
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
@@ -157,6 +159,7 @@ export function Map({
   const [zoom, setZoom] = useState(initialZoom);
   const [isLoaded, setIsLoaded] = useState(false);
   const mapClickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const currentLocationMarkerRef = useRef<google.maps.Marker | null>(null);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return; // initialize map only once
@@ -484,6 +487,66 @@ export function Map({
     };
   }, [onMapClick, clickMode, isLoaded]);
 
+  // Handle current location marker during navigation
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+
+    // Remove existing current location marker
+    if (currentLocationMarkerRef.current) {
+      currentLocationMarkerRef.current.setMap(null);
+      currentLocationMarkerRef.current = null;
+    }
+
+    // Add current location marker if navigating and location is available
+    if (isNavigating && currentLocation) {
+      currentLocationMarkerRef.current = new google.maps.Marker({
+        position: { lat: currentLocation.lat, lng: currentLocation.lng },
+        map: map.current,
+        title: 'Your Current Location',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+          scale: 8,
+        },
+        zIndex: 1000 // Ensure it appears above other markers
+      });
+
+      // Add accuracy circle if available
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          if (position.coords.accuracy && currentLocationMarkerRef.current) {
+            new google.maps.Circle({
+              strokeColor: '#4285F4',
+              strokeOpacity: 0.3,
+              strokeWeight: 1,
+              fillColor: '#4285F4',
+              fillOpacity: 0.1,
+              map: map.current,
+              center: { lat: currentLocation.lat, lng: currentLocation.lng },
+              radius: position.coords.accuracy
+            });
+          }
+        });
+      }
+
+      // Center map on current location during navigation
+      if (isNavigating) {
+        map.current.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (currentLocationMarkerRef.current) {
+        currentLocationMarkerRef.current.setMap(null);
+        currentLocationMarkerRef.current = null;
+      }
+    };
+  }, [currentLocation, isNavigating, isLoaded]);
+
   return (
     <div className="relative w-full h-full min-h-[400px] sm:min-h-[500px]">
       <div ref={mapContainer} className="map-container w-full h-full" />
@@ -524,7 +587,7 @@ export function Map({
           />
         </>
       )}
-      {isLoaded && showControls && <MapControls map={map.current} />}
+      {isLoaded && showControls && <MapControls map={map.current} route={routeData} />}
     </div>
   );
 }

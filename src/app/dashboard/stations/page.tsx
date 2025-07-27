@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,32 +10,33 @@ import {
     Zap,
     Clock,
     Star,
-    Filter,
     Search,
     Map as MapIcon,
     List,
     Navigation,
-    Phone,
-    Globe,
     Euro,
-    Loader2,
-    Plus
+    Plus,
+    Edit,
+    Trash2,
+    Loader2
 } from 'lucide-react';
-import { useUserStations } from '@/lib/api/hooks/user-station-hooks';
+import { useUserStations, useUpdateStation, useDeleteStation } from '@/lib/api/hooks/user-station-hooks';
+import { StationFormModal } from '@/components/stations/station-form-modal';
 import Link from 'next/link';
 
 export default function StationsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
     const [filterStatus, setFilterStatus] = useState<'all' | 'available' | 'occupied' | 'offline'>('all');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingStation, setEditingStation] = useState<any>(null);
 
     // Get user stations only
     const { data: userStations = [], isLoading, error } = useUserStations();
-    console.log(useUserStations().data)
-    // Debug logging
-    console.log('Stations page - userStations:', userStations);
-    console.log('Stations page - isLoading:', isLoading);
-    console.log('Stations page - error:', error);
+    
+    // Mutations for edit and delete
+    const updateStationMutation = useUpdateStation();
+    const deleteStationMutation = useDeleteStation();
 
     const filteredStations = userStations.filter(station => {
         const matchesSearch = station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,6 +55,39 @@ export default function StationsPage() {
 
     const getStatusText = (isActive: boolean) => {
         return isActive ? 'Available' : 'Offline';
+    };
+
+    const handleEditStation = (station: any) => {
+        setEditingStation(station);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteStation = async (stationId: string) => {
+        if (window.confirm('Are you sure you want to delete this station? This action cannot be undone.')) {
+            try {
+                await deleteStationMutation.mutateAsync(stationId);
+            } catch (error) {
+                console.error('Error deleting station:', error);
+            }
+        }
+    };
+
+    const handleUpdateStation = async (data: any) => {
+        try {
+            await updateStationMutation.mutateAsync({
+                id: editingStation.id,
+                ...data
+            });
+            setIsModalOpen(false);
+            setEditingStation(null);
+        } catch (error) {
+            console.error('Error updating station:', error);
+        }
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setEditingStation(null);
     };
 
     return (
@@ -252,30 +286,48 @@ export default function StationsPage() {
                                                         <span>24/7</span>
                                                     </div>
                                                 )}
-                                                {station.rate && (
+                                                {/* {station.rate && (
                                                     <div className="flex items-center gap-1 text-yellow-600">
                                                         <Star className="h-4 w-4 fill-current" />
                                                         <span>{station.rate.toFixed(1)}</span>
                                                     </div>
+                                                )} */}
+                                                {station.connectors && station.connectors.length > 0 && (
+                                                    <div className="flex items-center gap-1 text-gray-600">
+                                                        <Euro className="h-4 w-4" />
+                                                        <span>{Math.min(...station.connectors.map(c => c.pricePerKwh)).toFixed(2)}-{Math.max(...station.connectors.map(c => c.pricePerKwh)).toFixed(2)}/kWh</span>
+                                                    </div>
                                                 )}
-                                                <div className="flex items-center gap-1 text-gray-600">
-                                                    <Euro className="h-4 w-4" />
-                                                    <span>0.30-0.45/kWh</span>
-                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col gap-2 ml-4">
-                                            <Link href={`/dashboard/map?station=${station.id}`}>
-                                                <Button size="sm" variant="outline" className="w-full">
-                                                    <Navigation className="h-4 w-4 mr-2" />
-                                                    Navigate
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={() => handleEditStation(station)}
+                                                    disabled={updateStationMutation.isPending}
+                                                >
+                                                    <Edit className="h-4 w-4 mr-2" />
+                                                    Edit
                                                 </Button>
-                                            </Link>
-                                            <Button size="sm" variant="outline">
-                                                <Zap className="h-4 w-4 mr-2" />
-                                                Book Now
-                                            </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={() => handleDeleteStation(station.id)}
+                                                    disabled={deleteStationMutation.isPending}
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    {deleteStationMutation.isPending ? (
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                    )}
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                          
                                         </div>
                                     </div>
 
@@ -286,7 +338,7 @@ export default function StationsPage() {
                                             <div className="flex flex-wrap gap-2">
                                                 {station.connectors.map((connector, index) => (
                                                     <Badge key={index} variant="outline" className="text-xs">
-                                                        {connector.type} - {connector.power}kW
+                                                        {connector.type} - {connector.powerOutput}kW
                                                     </Badge>
                                                 ))}
                                             </div>
@@ -322,6 +374,18 @@ export default function StationsPage() {
                     </Button>
                 </Link>
             </div>
+
+            {/* Station Form Modal */}
+            <StationFormModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                onSubmit={handleUpdateStation}
+                onDelete={() => handleDeleteStation(editingStation?.id)}
+                initialData={editingStation}
+                isEditing={!!editingStation}
+                isLoading={updateStationMutation.isPending}
+                isDeleting={deleteStationMutation.isPending}
+            />
         </div>
     );
 }

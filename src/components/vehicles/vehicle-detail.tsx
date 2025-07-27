@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import Link from 'next/link';
+import { ConnectorType } from '@/lib/api/hooks/user-station-hooks';
 
 interface Vehicle {
   id: string;
@@ -22,7 +24,7 @@ interface Vehicle {
   licensePlate: string;
   vin?: string;
   batteryCapacity?: number;
-  chargingPortType?: string;
+  connectorType?: ConnectorType;
 }
 
 interface VehicleDetailProps {
@@ -39,9 +41,13 @@ export function VehicleDetail({ vehicle, onEdit, onDelete }: VehicleDetailProps)
           {vehicle.year} {vehicle.make} {vehicle.model}
         </CardTitle>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={() => onEdit(vehicle.id)}>
-            <Edit className="h-4 w-4" />
-          </Button>
+          <Link href={`/dashboard/vehicles/${vehicle.id}/edit`} className="flex-1">
+            <Button variant="outline" size="sm" onClick={() => onEdit(vehicle.id)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+
+          </Link>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="destructive" size="sm">
@@ -83,10 +89,10 @@ export function VehicleDetail({ vehicle, onEdit, onDelete }: VehicleDetailProps)
             <p className="text-lg font-medium">{vehicle.batteryCapacity} kWh</p>
           </div>
         )}
-        {vehicle.chargingPortType && (
+        {vehicle.connectorType && (
           <div>
             <p className="text-sm text-muted-foreground">Charging Port Type</p>
-            <p className="text-lg font-medium">{vehicle.chargingPortType}</p>
+            <p className="text-lg font-medium">{vehicle.connectorType}</p>
           </div>
         )}
       </CardContent>
