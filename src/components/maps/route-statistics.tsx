@@ -148,7 +148,7 @@ export function RouteStatistics({ route }: RouteStatisticsProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-2xl font-bold">{energyEfficiency.toFixed(2)} kWh/100km</p>
+              <p className="text-2xl font-bold">{energyEfficiency.toFixed(2)} kWh/1km</p>
               <p className="text-sm text-muted-foreground">Energy consumption rate</p>
             </div>
             

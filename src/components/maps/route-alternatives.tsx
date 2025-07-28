@@ -256,7 +256,7 @@ export function RouteAlternatives({
                   {route.chargingStations.length}
                 </td>
                 <td className="text-center p-3">
-                  {efficiency.toFixed(2)} kWh/100km
+                  {efficiency.toFixed(2)} kWh/1km
                 </td>
                 <td className="text-center p-3">
                   <Button

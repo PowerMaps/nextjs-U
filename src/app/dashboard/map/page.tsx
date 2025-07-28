@@ -118,7 +118,7 @@ function MapPageContent() {
     try {
       const result = await calculateRoute.mutateAsync(routeRequest);
       console.log('Route calculation result:', result);
-      setCurrentRoute(result);
+      setCurrentRoute(result.route);
     } catch (error) {
       console.error('Route calculation failed:', error);
     }

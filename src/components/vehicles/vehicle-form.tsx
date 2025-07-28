@@ -33,7 +33,7 @@ const vehicleSchema = z.object({
   range: z.number().min(1, "Range is required"),
   efficiency: z.number().min(0.1, "Efficiency is required"),
   connectorType: z.nativeEnum(ConnectorType),
-  chargingPower: z.number().min(1, "Charging power is required"),
+  chargingPower: z.number().min(0, "Charging power is required"),
 });
 
 const CONNECTOR_TYPE_OPTIONS = [
@@ -135,7 +135,7 @@ export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormPro
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="efficiency">Efficiency (kWh/100km) *</Label>
+            <Label htmlFor="efficiency">Efficiency (kWh/1km) *</Label>
             <Input
               id="efficiency"
               type="number"

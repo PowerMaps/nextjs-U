@@ -6,7 +6,8 @@ import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { NotificationDetail } from '@/components/notifications/notification-detail';
 
 export default function NotificationDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
 
   // Placeholder for fetching notification data
   const notification = {

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+// import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -37,33 +37,33 @@ export function NotificationPreferences() {
           <h3 className="text-lg font-semibold">Notification Channels</h3>
           <div className="flex items-center justify-between">
             <Label htmlFor="email-notifications">Email Notifications</Label>
-            <Switch
+            {/* <Switch
               id="email-notifications"
               checked={settings.emailNotifications}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, emailNotifications: checked })
               }
-            />
+            /> */}
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="push-notifications">Push Notifications</Label>
-            <Switch
+            {/* <Switch
               id="push-notifications"
               checked={settings.pushNotifications}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, pushNotifications: checked })
               }
-            />
+            /> */}
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="sms-notifications">SMS Notifications</Label>
-            <Switch
+            {/* <Switch
               id="sms-notifications"
               checked={settings.smsNotifications}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, smsNotifications: checked })
               }
-            />
+            /> */}
           </div>
         </div>
 
@@ -71,33 +71,33 @@ export function NotificationPreferences() {
           <h3 className="text-lg font-semibold">Notification Types</h3>
           <div className="flex items-center justify-between">
             <Label htmlFor="new-trip-alerts">New Trip Alerts</Label>
-            <Switch
+            {/* <Switch
               id="new-trip-alerts"
               checked={settings.newTripAlerts}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, newTripAlerts: checked })
               }
-            />
+            /> */}
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="charging-session-updates">Charging Session Updates</Label>
-            <Switch
+            {/* <Switch
               id="charging-session-updates"
               checked={settings.chargingSessionUpdates}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, chargingSessionUpdates: checked })
               }
-            />
+            /> */}
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="promotional-offers">Promotional Offers</Label>
-            <Switch
+            {/* <Switch
               id="promotional-offers"
               checked={settings.promotionalOffers}
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, promotionalOffers: checked })
               }
-            />
+            /> */}
           </div>
         </div>
 
