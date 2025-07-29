@@ -20,13 +20,24 @@ interface NavigationInstructionOverlayProps {
 }
 
 export function NavigationInstructionOverlay({ route }: NavigationInstructionOverlayProps) {
-  const { 
-    isNavigating, 
-    currentStepIndex, 
-    isVoiceEnabled, 
-    toggleVoice,
-    speakInstruction 
-  } = useNavigation();
+  // Make navigation optional - only use if NavigationProvider is available
+  let isNavigating = false;
+  let currentStepIndex = 0;
+  let isVoiceEnabled = true;
+  let toggleVoice = () => {};
+  let speakInstruction = () => {};
+  
+  try {
+    const navigation = useNavigation();
+    isNavigating = navigation.isNavigating;
+    currentStepIndex = navigation.currentStepIndex;
+    isVoiceEnabled = navigation.isVoiceEnabled;
+    toggleVoice = navigation.toggleVoice;
+    speakInstruction = navigation.speakInstruction;
+  } catch (error) {
+    // NavigationProvider not available, use default values
+    console.log('NavigationProvider not available in NavigationInstructionOverlay, navigation features disabled');
+  }
 
   if (!isNavigating || !route) {
     return null;

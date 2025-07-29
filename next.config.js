@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    instrumentationHook: false,
+  },
   images: {
     domains: ['localhost', 'api.charge-tn.com'], // Add your API domains here
     unoptimized: process.env.CAPACITOR_BUILD === 'true', // Disable image optimization for Capacitor builds

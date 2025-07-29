@@ -149,7 +149,19 @@ export function Map({
   clickMode = 'none'
 }: MapProps) {
   const { theme } = useMapContext();
-  const { currentLocation, isNavigating } = useNavigation();
+
+  // Make navigation optional - only use if NavigationProvider is available
+  let currentLocation = null;
+  let isNavigating = false;
+
+  try {
+    const navigation = useNavigation();
+    currentLocation = navigation.currentLocation;
+    isNavigating = navigation.isNavigating;
+  } catch (error) {
+    // NavigationProvider not available, use default values
+    console.log('NavigationProvider not available, navigation features disabled');
+  }
   const mapTheme = propTheme || theme;
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
