@@ -1,15 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { ThemeProvider } from '@/components/layout/theme-provider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
-// Import existing components that are already used in the app
-import { Card, CardContent, CardHeader, CardTitle } from '../card';
-import { Button } from '../button';
-import { Label } from '../label';
-import { Input } from '../input';
-import { useToast } from '../use-toast';
-
-// Import newly added components
+// Import all the new components to test integration
 import {
   Form,
   FormField,
@@ -21,454 +18,631 @@ import {
   RadioGroup,
   RadioGroupItem,
   Slider,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
+  DataTable,
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Calendar,
+  DatePicker,
+  Combobox,
+  Toggle,
+  ToggleGroup,
+  ToggleGroupItem,
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Badge,
-  Separator,
-} from '../index';
+  Input,
+  Label
+} from '@/components/ui';
 
-// Mock react-hook-form for Form testing
-import { useForm } from 'react-hook-form';
+// Test wrapper component that provides necessary context
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
 
-// Mock toast hook
-jest.mock('../use-toast', () => ({
-  useToast: jest.fn(() => ({
-    toast: jest.fn(),
-  })),
-}));
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
+
+// Form schema for testing form integration
+const testFormSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  notifications: z.boolean(),
+  theme: z.enum(['light', 'dark', 'system']),
+  volume: z.number().min(0).max(100),
+});
+
+type TestFormData = z.infer<typeof testFormSchema>;
+
+// Test form component using new form components
+const TestFormComponent: React.FC = () => {
+  const form = useForm<TestFormData>({
+    resolver: zodResolver(testFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      notifications: false,
+      theme: 'light',
+      volume: 50,
+    },
+  });
+
+  const onSubmit = (data: TestFormData) => {
+    console.log('Form submitted:', data);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="Enter your email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="notifications"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Email Notifications</FormLabel>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="theme"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Theme Preference</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="light" id="light" />
+                    <Label htmlFor="light">Light</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="dark" id="dark" />
+                    <Label htmlFor="dark">Dark</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="system" id="system" />
+                    <Label htmlFor="system">System</Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="volume"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Volume: {field.value}</FormLabel>
+              <FormControl>
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[field.value]}
+                  onValueChange={(value) => field.onChange(value[0])}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
+  );
+};
+
+// Test data table component
+const TestDataTableComponent: React.FC = () => {
+  const data = [
+    { id: '1', name: 'John Doe', email: 'john@example.com', status: 'active' },
+    { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'inactive' },
+    { id: '3', name: 'Bob Johnson', email: 'bob@example.com', status: 'active' },
+  ];
+
+  const columns = [
+    { accessorKey: 'name', header: 'Name' },
+    { accessorKey: 'email', header: 'Email' },
+    { accessorKey: 'status', header: 'Status' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <DataTable columns={columns} data={data} />
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>{item.email}</TableCell>
+              <TableCell>
+                <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
+                  {item.status}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+// Test layout components
+const TestLayoutComponent: React.FC = () => {
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+
+  return (
+    <div className="space-y-6">
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline">Open Sheet</Button>
+        </SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Sheet Title</SheetTitle>
+          </SheetHeader>
+          <div className="py-4">
+            <p>This is sheet content</p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Accordion type="single" collapsible>
+        <AccordionItem value="item-1">
+          <AccordionTrigger>Accordion Item 1</AccordionTrigger>
+          <AccordionContent>
+            This is the content for accordion item 1.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-2">
+          <AccordionTrigger>Accordion Item 2</AccordionTrigger>
+          <AccordionContent>
+            This is the content for accordion item 2.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+};
+
+// Test navigation components
+const TestNavigationComponent: React.FC = () => {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div className="space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Settings</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div>
+        <Button onClick={() => setOpen(true)}>Open Command</Button>
+        <CommandDialog open={open} onOpenChange={setOpen}>
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              <CommandItem>Calendar</CommandItem>
+              <CommandItem>Search Emoji</CommandItem>
+              <CommandItem>Calculator</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
+      </div>
+    </div>
+  );
+};
 
 describe('Component Integration Tests', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('New form components integrate with existing Card and Button components', () => {
-    const TestForm = () => {
-      const form = useForm({
-        defaultValues: {
-          name: '',
-          email: '',
-          notifications: false,
-          theme: 'light',
-          volume: [50],
-        },
-      });
-
-      return (
-        <Card data-testid="form-card">
-          <CardHeader>
-            <CardTitle>Settings Form</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="notifications"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="notifications-switch"
-                        />
-                      </FormControl>
-                      <FormLabel>Enable notifications</FormLabel>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="theme"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Theme</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          data-testid="theme-radio"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="light" id="light" />
-                            <Label htmlFor="light">Light</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="dark" id="dark" />
-                            <Label htmlFor="dark">Dark</Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="volume"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Volume</FormLabel>
-                      <FormControl>
-                        <Slider
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          max={100}
-                          step={1}
-                          data-testid="volume-slider"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <Button type="submit" data-testid="submit-button">
-                  Save Settings
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+  describe('Form Components Integration', () => {
+    it('should render form with all new form components', () => {
+      render(
+        <TestWrapper>
+          <TestFormComponent />
+        </TestWrapper>
       );
-    };
 
-    render(<TestForm />);
-    
-    expect(screen.getByTestId('form-card')).toBeInTheDocument();
-    expect(screen.getByTestId('notifications-switch')).toBeInTheDocument();
-    expect(screen.getByTestId('theme-radio')).toBeInTheDocument();
-    expect(screen.getByTestId('volume-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('submit-button')).toBeInTheDocument();
-  });
-
-  test('New layout components work with existing Card components', async () => {
-    const TestLayout = () => (
-      <div>
-        <Card data-testid="main-card">
-          <CardHeader>
-            <CardTitle>Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible data-testid="accordion">
-              <AccordionItem value="item-1">
-                <AccordionTrigger data-testid="accordion-trigger-1">Section 1</AccordionTrigger>
-                <AccordionContent>
-                  <Card data-testid="nested-card">
-                    <CardContent>
-                      <p>Nested content in accordion</p>
-                    </CardContent>
-                  </Card>
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-2">
-                <AccordionTrigger data-testid="accordion-trigger-2">Section 2</AccordionTrigger>
-                <AccordionContent>
-                  <Alert data-testid="alert-in-accordion">
-                    <AlertTitle>Information</AlertTitle>
-                    <AlertDescription>
-                      This alert is inside an accordion item.
-                    </AlertDescription>
-                  </Alert>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
-      </div>
-    );
-
-    render(<TestLayout />);
-    
-    expect(screen.getByTestId('main-card')).toBeInTheDocument();
-    expect(screen.getByTestId('accordion')).toBeInTheDocument();
-    
-    // Open the first accordion item to access nested content
-    fireEvent.click(screen.getByTestId('accordion-trigger-1'));
-    
-    await waitFor(() => {
-      expect(screen.getByTestId('nested-card')).toBeInTheDocument();
+      expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/email notifications/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/light/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/volume/i)).toBeInTheDocument();
     });
-    
-    // Open the second accordion item to access alert
-    fireEvent.click(screen.getByTestId('accordion-trigger-2'));
-    
-    await waitFor(() => {
-      expect(screen.getByTestId('alert-in-accordion')).toBeInTheDocument();
+
+    it('should handle form validation correctly', async () => {
+      render(
+        <TestWrapper>
+          <TestFormComponent />
+        </TestWrapper>
+      );
+
+      const submitButton = screen.getByRole('button', { name: /submit/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/name must be at least 2 characters/i)).toBeInTheDocument();
+        expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should handle switch toggle', () => {
+      render(
+        <TestWrapper>
+          <TestFormComponent />
+        </TestWrapper>
+      );
+
+      const switchElement = screen.getByRole('switch');
+      expect(switchElement).not.toBeChecked();
+      
+      fireEvent.click(switchElement);
+      expect(switchElement).toBeChecked();
+    });
+
+    it('should handle radio group selection', () => {
+      render(
+        <TestWrapper>
+          <TestFormComponent />
+        </TestWrapper>
+      );
+
+      const darkRadio = screen.getByLabelText(/dark/i);
+      fireEvent.click(darkRadio);
+      expect(darkRadio).toBeChecked();
     });
   });
 
-  test('New data display components integrate with existing components', () => {
-    const TestDataDisplay = () => (
-      <Card data-testid="data-card">
-        <CardHeader>
-          <CardTitle>User Data</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table data-testid="data-table">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>John Doe</TableCell>
-                <TableCell>
-                  <Badge variant="default" data-testid="status-badge">
-                    Active
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm" data-testid="action-button">
-                    Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Jane Smith</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" data-testid="status-badge-2">
-                    Inactive
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-          
-          <Separator className="my-4" />
-          
-          <Alert data-testid="info-alert">
-            <AlertTitle>Note</AlertTitle>
-            <AlertDescription>
-              This table shows user data with integrated components.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
+  describe('Data Display Components Integration', () => {
+    it('should render data table with existing UI components', () => {
+      render(
+        <TestWrapper>
+          <TestDataTableComponent />
+        </TestWrapper>
+      );
 
-    render(<TestDataDisplay />);
-    
-    expect(screen.getByTestId('data-card')).toBeInTheDocument();
-    expect(screen.getByTestId('data-table')).toBeInTheDocument();
-    expect(screen.getByTestId('status-badge')).toBeInTheDocument();
-    expect(screen.getByTestId('status-badge-2')).toBeInTheDocument();
-    expect(screen.getByTestId('action-button')).toBeInTheDocument();
-    expect(screen.getByTestId('info-alert')).toBeInTheDocument();
-  });
-
-  test('Sheet component works with existing components', async () => {
-    const TestSheet = () => (
-      <div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button data-testid="sheet-trigger">Open Settings</Button>
-          </SheetTrigger>
-          <SheetContent data-testid="sheet-content">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Settings Panel</h2>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch data-testid="sheet-switch" />
-                      <Label>Enable feature</Label>
-                    </div>
-                    <Button data-testid="sheet-button">Save</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    );
-
-    render(<TestSheet />);
-    
-    expect(screen.getByTestId('sheet-trigger')).toBeInTheDocument();
-    
-    // Click to open sheet
-    fireEvent.click(screen.getByTestId('sheet-trigger'));
-    
-    // Wait for sheet content to be available
-    await waitFor(() => {
-      expect(screen.getByTestId('sheet-content')).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+      expect(screen.getAllByText('active')).toHaveLength(2);
     });
-    
-    expect(screen.getByTestId('sheet-switch')).toBeInTheDocument();
-    expect(screen.getByTestId('sheet-button')).toBeInTheDocument();
+
+    it('should render table with badges correctly', () => {
+      render(
+        <TestWrapper>
+          <TestDataTableComponent />
+        </TestWrapper>
+      );
+
+      const badges = screen.getAllByText(/active|inactive/);
+      expect(badges.length).toBeGreaterThan(0);
+    });
   });
 
-  test('Tooltip integration with existing Button components', () => {
-    const TestTooltips = () => (
-      <TooltipProvider>
-        <Card data-testid="tooltip-card">
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-x-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="default" data-testid="tooltip-button-1">
-                  Save
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent data-testid="tooltip-content-1">
-                <p>Save your changes</p>
-              </TooltipContent>
-            </Tooltip>
+  describe('Layout Components Integration', () => {
+    it('should render sheet component', () => {
+      render(
+        <TestWrapper>
+          <TestLayoutComponent />
+        </TestWrapper>
+      );
+
+      const openButton = screen.getByRole('button', { name: /open sheet/i });
+      expect(openButton).toBeInTheDocument();
+    });
+
+    it('should render accordion component', () => {
+      render(
+        <TestWrapper>
+          <TestLayoutComponent />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('Accordion Item 1')).toBeInTheDocument();
+      expect(screen.getByText('Accordion Item 2')).toBeInTheDocument();
+    });
+
+    it('should handle accordion expansion', () => {
+      render(
+        <TestWrapper>
+          <TestLayoutComponent />
+        </TestWrapper>
+      );
+
+      const accordionTrigger = screen.getByText('Accordion Item 1');
+      fireEvent.click(accordionTrigger);
+
+      expect(screen.getByText('This is the content for accordion item 1.')).toBeInTheDocument();
+    });
+  });
+
+  describe('Navigation Components Integration', () => {
+    it('should render breadcrumb navigation', () => {
+      render(
+        <TestWrapper>
+          <TestNavigationComponent />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('Home')).toBeInTheDocument();
+      expect(screen.getByText('Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+    });
+
+    it('should render command dialog trigger', () => {
+      render(
+        <TestWrapper>
+          <TestNavigationComponent />
+        </TestWrapper>
+      );
+
+      const commandButton = screen.getByRole('button', { name: /open command/i });
+      expect(commandButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Theme Integration', () => {
+    it('should work with theme provider', () => {
+      render(
+        <TestWrapper>
+          <div>
+            <Button>Test Button</Button>
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Card</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertTitle>Test Alert</AlertTitle>
+                  <AlertDescription>This is a test alert</AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
+        </TestWrapper>
+      );
+
+      expect(screen.getByRole('button', { name: /test button/i })).toBeInTheDocument();
+      expect(screen.getByText('Test Card')).toBeInTheDocument();
+      expect(screen.getByText('Test Alert')).toBeInTheDocument();
+    });
+  });
+
+  describe('Utility Components Integration', () => {
+    it('should render toggle components', () => {
+      render(
+        <TestWrapper>
+          <div className="space-y-4">
+            <Toggle>Single Toggle</Toggle>
+            <ToggleGroup type="single">
+              <ToggleGroupItem value="a">A</ToggleGroupItem>
+              <ToggleGroupItem value="b">B</ToggleGroupItem>
+              <ToggleGroupItem value="c">C</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('Single Toggle')).toBeInTheDocument();
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.getByText('B')).toBeInTheDocument();
+      expect(screen.getByText('C')).toBeInTheDocument();
+    });
+
+    it('should render tooltip with provider', () => {
+      render(
+        <TestWrapper>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline">Hover me</Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>This is a tooltip</p>
+            </TooltipContent>
+          </Tooltip>
+        </TestWrapper>
+      );
+
+      expect(screen.getByRole('button', { name: /hover me/i })).toBeInTheDocument();
+    });
+
+    it('should render popover component', () => {
+      render(
+        <TestWrapper>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline">Open popover</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Dimensions</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Set the dimensions for the layer.
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </TestWrapper>
+      );
+
+      expect(screen.getByRole('button', { name: /open popover/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Existing Component Compatibility', () => {
+    it('should not conflict with existing components', () => {
+      render(
+        <TestWrapper>
+          <div className="space-y-4">
+            {/* Existing components */}
+            <Button variant="default">Existing Button</Button>
+            <Card>
+              <CardHeader>
+                <CardTitle>Existing Card</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge>Existing Badge</Badge>
+              </CardContent>
+            </Card>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="destructive" data-testid="tooltip-button-2">
-                  Delete
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent data-testid="tooltip-content-2">
-                <p>Delete this item</p>
-              </TooltipContent>
-            </Tooltip>
-          </CardContent>
-        </Card>
-      </TooltipProvider>
-    );
+            {/* New components */}
+            <Switch />
+            <Alert>
+              <AlertTitle>New Alert</AlertTitle>
+              <AlertDescription>This uses new alert component</AlertDescription>
+            </Alert>
+            <Toggle>New Toggle</Toggle>
+          </div>
+        </TestWrapper>
+      );
 
-    render(<TestTooltips />);
-    
-    expect(screen.getByTestId('tooltip-card')).toBeInTheDocument();
-    expect(screen.getByTestId('tooltip-button-1')).toBeInTheDocument();
-    expect(screen.getByTestId('tooltip-button-2')).toBeInTheDocument();
+      // All components should render without conflicts
+      expect(screen.getByRole('button', { name: /existing button/i })).toBeInTheDocument();
+      expect(screen.getByText('Existing Card')).toBeInTheDocument();
+      expect(screen.getByText('Existing Badge')).toBeInTheDocument();
+      expect(screen.getByText('New Alert')).toBeInTheDocument();
+      expect(screen.getByText('New Toggle')).toBeInTheDocument();
+    });
   });
 
-  test('No conflicts between existing and new components', () => {
-    // Test that importing both old and new components doesn't cause conflicts
-    const TestNoConflicts = () => (
-      <div>
-        {/* Existing components */}
-        <Card data-testid="existing-card">
-          <CardHeader>
-            <CardTitle>Existing Components</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button data-testid="existing-button">Existing Button</Button>
-            <Input placeholder="Existing input" data-testid="existing-input" />
-            <Label data-testid="existing-label">Existing Label</Label>
-          </CardContent>
-        </Card>
-        
-        {/* New components */}
-        <Card data-testid="new-card">
-          <CardHeader>
-            <CardTitle>New Components</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Switch data-testid="new-switch" />
-            <Slider defaultValue={[50]} data-testid="new-slider" />
-            <Badge data-testid="new-badge">New Badge</Badge>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  describe('Error Boundaries and Edge Cases', () => {
+    it('should handle missing required props gracefully', () => {
+      // Test that components don't crash with minimal props
+      render(
+        <TestWrapper>
+          <div>
+            <Alert>
+              <AlertDescription>Minimal alert</AlertDescription>
+            </Alert>
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Minimal table</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </TestWrapper>
+      );
 
-    render(<TestNoConflicts />);
-    
-    // Verify all components render without conflicts
-    expect(screen.getByTestId('existing-card')).toBeInTheDocument();
-    expect(screen.getByTestId('existing-button')).toBeInTheDocument();
-    expect(screen.getByTestId('existing-input')).toBeInTheDocument();
-    expect(screen.getByTestId('existing-label')).toBeInTheDocument();
-    
-    expect(screen.getByTestId('new-card')).toBeInTheDocument();
-    expect(screen.getByTestId('new-switch')).toBeInTheDocument();
-    expect(screen.getByTestId('new-slider')).toBeInTheDocument();
-    expect(screen.getByTestId('new-badge')).toBeInTheDocument();
-  });
-
-  test('Components maintain consistent styling and behavior', () => {
-    const TestConsistency = () => (
-      <div className="space-y-4">
-        {/* Test that all button variants work consistently */}
-        <div className="space-x-2">
-          <Button variant="default" data-testid="btn-default">Default</Button>
-          <Button variant="secondary" data-testid="btn-secondary">Secondary</Button>
-          <Button variant="outline" data-testid="btn-outline">Outline</Button>
-          <Button variant="destructive" data-testid="btn-destructive">Destructive</Button>
-        </div>
-        
-        {/* Test that cards maintain consistent styling */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card data-testid="card-1">
-            <CardContent>Card 1</CardContent>
-          </Card>
-          <Card data-testid="card-2">
-            <CardContent>Card 2</CardContent>
-          </Card>
-        </div>
-        
-        {/* Test that form elements are consistent */}
-        <div className="space-y-2">
-          <Input placeholder="Input field" data-testid="input-field" />
-          <Switch data-testid="switch-field" />
-          <Slider defaultValue={[25]} data-testid="slider-field" />
-        </div>
-      </div>
-    );
-
-    render(<TestConsistency />);
-    
-    // Verify all elements render
-    expect(screen.getByTestId('btn-default')).toBeInTheDocument();
-    expect(screen.getByTestId('btn-secondary')).toBeInTheDocument();
-    expect(screen.getByTestId('btn-outline')).toBeInTheDocument();
-    expect(screen.getByTestId('btn-destructive')).toBeInTheDocument();
-    
-    expect(screen.getByTestId('card-1')).toBeInTheDocument();
-    expect(screen.getByTestId('card-2')).toBeInTheDocument();
-    
-    expect(screen.getByTestId('input-field')).toBeInTheDocument();
-    expect(screen.getByTestId('switch-field')).toBeInTheDocument();
-    expect(screen.getByTestId('slider-field')).toBeInTheDocument();
+      expect(screen.getByText('Minimal alert')).toBeInTheDocument();
+      expect(screen.getByText('Minimal table')).toBeInTheDocument();
+    });
   });
 });

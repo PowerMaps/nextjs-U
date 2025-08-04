@@ -1,35 +1,25 @@
 /**
  * Platform detection and conditional import system
- * 
- * This module provides utilities for detecting the current platform (web vs native)
- * and conditionally importing platform-specific modules.
+ * Entry point for universal app platform utilities
  */
 
-// Export types
-export type {
-  Platform,
-  PlatformCapabilities,
-  PlatformDetector,
+export { platformDetector, UniversalPlatformDetector } from './detector';
+export { 
+  importPlatformModule, 
+  createPlatformAdapter, 
+  executePlatformSpecific,
+  getPlatformConfig 
+} from './conditional-imports';
+export type { 
+  Platform, 
+  PlatformDetector, 
+  PlatformCapabilities, 
   PlatformAdapter,
   PlatformConfig,
-  FeatureFlags,
+  FeatureFlags 
 } from './types';
 
-// Export platform detector
-export { platformDetector, PlatformDetectorImpl } from './detector';
-
-// Export conditional import utilities
-export {
-  conditionalImport,
-  createPlatformAdapter,
-  conditionalImportWithFallback,
-  createPlatformComponent,
-  isPlatformModuleAvailable,
-  batchConditionalImport,
-  PlatformImportError,
-} from './conditional-imports';
-
-// Convenience exports for common use cases
+// Re-export commonly used utilities
 import { platformDetector as detector } from './detector';
 
 export const isNative = () => detector.isNative();

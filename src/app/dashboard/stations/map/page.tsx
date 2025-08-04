@@ -5,9 +5,9 @@ import { Map } from '@/components/maps/map';
 import { StationFormModal } from '@/components/stations/station-form-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  MapPin, 
-  Plus, 
+import {
+  MapPin,
+  Plus,
   ArrowLeft,
   Save,
   Trash2,
@@ -16,13 +16,15 @@ import {
 } from 'lucide-react';
 import { MapProvider } from '@/lib/contexts/map-context';
 
-import { 
-  useUserStations, 
-  useCreateStation, 
-  useUpdateStation, 
+import {
+  useUserStations,
+  useCreateStation,
+  useUpdateStation,
   useDeleteStation,
   CreateStationDto,
-  UpdateStationDto
+  UpdateStationDto,
+  ConnectorType,
+  ConnectorSpeed
 } from '@/lib/api/hooks/user-station-hooks';
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
@@ -33,14 +35,15 @@ interface StationFormData {
   latitude: number;
   longitude: number;
   connectors: Array<{
-    type: string;
-    power: number;
+    type: ConnectorType;
+    speed: ConnectorSpeed;
+    powerOutput: number;
     pricePerKwh: number;
   }>;
   openingTime?: string;
   closingTime?: string;
   amenities: string[];
-  operator: string;
+  operator?: string;
   phone?: string;
   website?: string;
 }
@@ -53,7 +56,7 @@ export default function StationsMapPage() {
 
   // API hooks
   const { data: userStations = [], isLoading: userStationsLoading, error: userStationsError } = useUserStations();
-  
+
   // Debug logging
   console.log('Map page - userStations:', userStations);
   console.log('Map page - userStationsLoading:', userStationsLoading);
@@ -76,10 +79,10 @@ export default function StationsMapPage() {
   const handleStationClick = useCallback((stationId: string) => {
     console.log('handleStationClick called with:', stationId);
     console.log('Available userStations:', userStations.map(s => s.id));
-    
+
     const station = userStations.find(s => s.id === stationId);
     console.log('Found station:', station);
-    
+
     if (station) {
       console.log('Opening edit form for station:', station.name);
       setEditingStation(station);
@@ -97,7 +100,14 @@ export default function StationsMapPage() {
         // Update existing station
         const updateData: UpdateStationDto = {
           id: editingStation.id,
-          ...formData
+          name: formData.name,
+          address: formData.address,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          connectors: formData.connectors,
+          openingTime: formData.openingTime,
+          closingTime: formData.closingTime,
+          amenities: formData.amenities,
         };
         await updateStationMutation.mutateAsync(updateData);
         toast({
@@ -106,14 +116,23 @@ export default function StationsMapPage() {
         });
       } else {
         // Create new station
-        const createData: CreateStationDto = formData;
+        const createData: CreateStationDto = {
+          name: formData.name,
+          address: formData.address,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          connectors: formData.connectors,
+          openingTime: formData.openingTime,
+          closingTime: formData.closingTime,
+          amenities: formData.amenities,
+        };
         await createStationMutation.mutateAsync(createData);
         toast({
           title: "Station created",
           description: "Your new charging station has been added successfully.",
         });
       }
-      
+
       setIsFormOpen(false);
       setEditingStation(null);
       setClickedLocation(null);
@@ -121,7 +140,7 @@ export default function StationsMapPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: editingStation 
+        description: editingStation
           ? "Failed to update station. Please try again."
           : "Failed to create station. Please try again.",
         variant: "destructive",
@@ -157,7 +176,7 @@ export default function StationsMapPage() {
     status: station.isActive ? 'available' as const : 'offline' as const,
     isUserOwned: true
   }));
-  
+
   console.log('Map stations for rendering:', mapStations);
 
   return (

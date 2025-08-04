@@ -201,11 +201,11 @@ export function RouteStatistics({ route }: RouteStatisticsProps) {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {costBreakdown.map((entry, index) => (
+                    {costBreakdown.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`$${value.toFixed(2)}`, 'Cost']} />
+                  <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Cost']} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>

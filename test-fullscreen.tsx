@@ -1,16 +1,47 @@
-// Test file to verify fullscreen layout works
-import { FullscreenMapLayout } from '@/components/layout/fullscreen-map-layout';
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
-export default function TestFullscreen() {
+// Test component to verify TypeScript support and IntelliSense
+export default function TestComponent() {
+  const [isEnabled, setIsEnabled] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState('');
+
   return (
-    <FullscreenMapLayout>
-      <div className="h-full w-full bg-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Fullscreen Map Layout Test</h1>
-          <p className="text-gray-600 mt-2">This should be fullscreen without sidebar</p>
-          <p className="text-sm text-gray-500 mt-4">Press Escape or click Back button to return to dashboard</p>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>TypeScript Test Component</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="test-input">Test Input</Label>
+          <Input
+            id="test-input"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Type something..."
+          />
         </div>
-      </div>
-    </FullscreenMapLayout>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="test-switch"
+            checked={isEnabled}
+            onCheckedChange={setIsEnabled}
+          />
+          <Label htmlFor="test-switch">Enable feature</Label>
+        </div>
+        
+        <Button 
+          onClick={() => alert(`Input: ${inputValue}, Switch: ${isEnabled}`)}
+          className="w-full"
+        >
+          Test Button
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

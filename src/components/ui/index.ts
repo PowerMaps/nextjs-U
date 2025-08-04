@@ -253,7 +253,6 @@ export {
 
 // Utility Components (newly added)
 export { Toggle } from "./toggle";
-export type { ToggleProps } from "./toggle";
 
 export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 

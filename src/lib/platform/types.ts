@@ -11,8 +11,8 @@ export interface PlatformCapabilities {
   hasStorage: boolean;
   hasBiometrics: boolean;
   hasAppState: boolean;
-  hasBackgroundSync: boolean;
-  hasNativeSharing: boolean;
+  hasNetwork: boolean;
+  hasDevice: boolean;
 }
 
 export interface PlatformDetector {
@@ -33,7 +33,6 @@ export interface PlatformConfig {
   storagePrefix: string;
   enabledFeatures: FeatureFlags;
   buildTarget: 'development' | 'production';
-  capacitorConfig?: any; // Will be typed properly when Capacitor is added
 }
 
 export interface FeatureFlags {
@@ -42,4 +41,6 @@ export interface FeatureFlags {
   backgroundSync: boolean;
   offlineMode: boolean;
   nativeSharing: boolean;
+  camera: boolean;
+  geolocation: boolean;
 }

@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const walletBalance = wallet?.balance || 0;
   const totalSavedRoutes = savedRoutes?.length || 0;
   const unreadNotifications = notifications?.items?.filter(n => !n.read).length || 0;
-  const nearbyStations = stationsData?.items?.filter(s => s.status === 'OPERATIONAL').length || 0;
+  const nearbyStations = stationsData?.items?.length || 0;
 
   // Recent activity from transactions
   const recentTransactions = transactions?.items || [];

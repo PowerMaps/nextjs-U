@@ -67,7 +67,7 @@ export function RouteVisualization({ map, route, onStationClick }: RouteVisualiz
 
       // Fit map to route bounds
       const bounds = new google.maps.LatLngBounds();
-      path.forEach(point => bounds.extend(point));
+      path.forEach((point: any) => bounds.extend(point));
       map.fitBounds(bounds);
     }
 

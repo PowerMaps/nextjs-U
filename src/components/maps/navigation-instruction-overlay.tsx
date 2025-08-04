@@ -25,7 +25,7 @@ export function NavigationInstructionOverlay({ route }: NavigationInstructionOve
   let currentStepIndex = 0;
   let isVoiceEnabled = true;
   let toggleVoice = () => {};
-  let speakInstruction = () => {};
+  let speakInstruction = (instruction: string) => {};
   
   try {
     const navigation = useNavigation();

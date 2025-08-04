@@ -1,179 +1,81 @@
 /**
- * Unit tests for platform detection utilities
+ * Tests for platform detection utilities
  */
 
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { beforeEach } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { beforeEach } from 'node:test';
-import { describe } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { afterEach } from 'node:test';
-import { beforeEach } from 'node:test';
-import { describe } from 'node:test';
-import { PlatformDetectorImpl } from '../detector';
+import { Capacitor } from '@capacitor/core';
+import { UniversalPlatformDetector } from '../detector';
 
-// Mock window object for testing
-const mockWindow = (capacitor?: any, userAgent?: string) => {
-  const originalWindow = global.window;
-  const originalNavigator = global.navigator;
+// Mock Capacitor
+jest.mock('@capacitor/core', () => ({
+  Capacitor: {
+    isNativePlatform: jest.fn(),
+    getPlatform: jest.fn()
+  }
+}));
 
-  // @ts-ignore
-  delete global.window;
-  // @ts-ignore
-  delete global.navigator;
+const mockCapacitor = Capacitor as jest.Mocked<typeof Capacitor>;
 
-  // @ts-ignore
-  global.window = {
-    Capacitor: capacitor,
-    localStorage: {
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-      removeItem: jest.fn(),
-      clear: jest.fn(),
-    },
-    Notification: class MockNotification {},
-  };
-
-  // @ts-ignore
-  global.navigator = {
-    userAgent: userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    mediaDevices: {
-      getUserMedia: jest.fn(),
-    },
-    geolocation: {
-      getCurrentPosition: jest.fn(),
-    },
-    serviceWorker: {},
-    share: jest.fn(),
-  };
-
-  return () => {
-    // @ts-ignore
-    global.window = originalWindow;
-    // @ts-ignore
-    global.navigator = originalNavigator;
-  };
-};
-
-describe('PlatformDetectorImpl', () => {
-  let detector: PlatformDetectorImpl;
-  let cleanup: () => void;
+describe('UniversalPlatformDetector', () => {
+  let detector: UniversalPlatformDetector;
 
   beforeEach(() => {
-    detector = new PlatformDetectorImpl();
-    cleanup = mockWindow();
-  });
-
-  afterEach(() => {
-    cleanup();
+    detector = new UniversalPlatformDetector();
     detector.reset();
+    jest.clearAllMocks();
   });
 
-  describe('isNative()', () => {
-    it('should return false when window is undefined (SSR)', () => {
-      // @ts-ignore
-      global.window = undefined;
-      expect(detector.isNative()).toBe(false);
-    });
-
-    it('should return false when Capacitor is not present', () => {
-      cleanup();
-      cleanup = mockWindow();
-      expect(detector.isNative()).toBe(false);
-    });
-
-    it('should return true when Capacitor is present', () => {
-      cleanup();
-      cleanup = mockWindow({ getPlatform: () => 'ios' });
+  describe('isNative', () => {
+    it('should return true when running in native environment', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      
       expect(detector.isNative()).toBe(true);
     });
+
+    it('should return false when running in web environment', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(false);
+      
+      expect(detector.isNative()).toBe(false);
+    });
   });
 
-  describe('isWeb()', () => {
-    it('should return true when not native', () => {
-      cleanup();
-      cleanup = mockWindow();
-      expect(detector.isWeb()).toBe(true);
-    });
-
-    it('should return false when native', () => {
-      cleanup();
-      cleanup = mockWindow({ getPlatform: () => 'ios' });
+  describe('isWeb', () => {
+    it('should return false when running in native environment', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      
       expect(detector.isWeb()).toBe(false);
     });
+
+    it('should return true when running in web environment', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(false);
+      
+      expect(detector.isWeb()).toBe(true);
+    });
   });
 
-  describe('getPlatform()', () => {
-    it('should return "web" for web environment', () => {
-      cleanup();
-      cleanup = mockWindow();
+  describe('getPlatform', () => {
+    it('should return "android" when running on Android', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('android');
+      
+      expect(detector.getPlatform()).toBe('android');
+    });
+
+    it('should return "ios" when running on iOS', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('ios');
+      
+      expect(detector.getPlatform()).toBe('ios');
+    });
+
+    it('should return "web" when running in browser', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(false);
+      
       expect(detector.getPlatform()).toBe('web');
     });
 
-    it('should return "ios" when Capacitor reports iOS', () => {
-      cleanup();
-      cleanup = mockWindow({ getPlatform: () => 'ios' });
-      expect(detector.getPlatform()).toBe('ios');
-    });
-
-    it('should return "android" when Capacitor reports android', () => {
-      cleanup();
-      cleanup = mockWindow({ getPlatform: () => 'android' });
-      expect(detector.getPlatform()).toBe('android');
-    });
-
-    it('should fallback to user agent detection for iOS', () => {
-      cleanup();
-      cleanup = mockWindow(
-        {}, // Capacitor present but no getPlatform
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)'
-      );
-      expect(detector.getPlatform()).toBe('ios');
-    });
-
-    it('should fallback to user agent detection for iPad', () => {
-      cleanup();
-      cleanup = mockWindow(
-        {},
-        'Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X)'
-      );
-      expect(detector.getPlatform()).toBe('ios');
-    });
-
-    it('should fallback to android for other native environments', () => {
-      cleanup();
-      cleanup = mockWindow(
-        {},
-        'Mozilla/5.0 (Linux; Android 10; SM-G975F)'
-      );
-      expect(detector.getPlatform()).toBe('android');
-    });
-
-    it('should cache platform detection result', () => {
-      cleanup();
-      const mockCapacitor = { getPlatform: jest.fn(() => 'ios') };
-      cleanup = mockWindow(mockCapacitor);
+    it('should cache platform result', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('android');
       
       detector.getPlatform();
       detector.getPlatform();
@@ -182,88 +84,62 @@ describe('PlatformDetectorImpl', () => {
     });
   });
 
-  describe('getCapabilities()', () => {
-    describe('web capabilities', () => {
-      beforeEach(() => {
-        cleanup();
-        cleanup = mockWindow();
-      });
-
-      it('should detect web capabilities correctly', () => {
-        const capabilities = detector.getCapabilities();
-        
-        expect(capabilities.hasCamera).toBe(true); // navigator.mediaDevices present
-        expect(capabilities.hasGeolocation).toBe(true); // navigator.geolocation present
-        expect(capabilities.hasNotifications).toBe(true); // Notification in window
-        expect(capabilities.hasStorage).toBe(true); // localStorage available
-        expect(capabilities.hasBiometrics).toBe(false); // Not available in web
-        expect(capabilities.hasAppState).toBe(false); // Not available in web
-        expect(capabilities.hasBackgroundSync).toBe(true); // serviceWorker present
-        expect(capabilities.hasNativeSharing).toBe(true); // navigator.share present
-      });
-
-      it('should handle missing web APIs gracefully', () => {
-        cleanup();
-        // @ts-ignore
-        global.navigator = {
-          userAgent: 'test',
-        };
-        // @ts-ignore
-        global.window = {};
-        detector.reset();
-
-        const capabilities = detector.getCapabilities();
-        
-        expect(capabilities.hasCamera).toBe(false);
-        expect(capabilities.hasGeolocation).toBe(false);
-        expect(capabilities.hasNotifications).toBe(false);
-        expect(capabilities.hasStorage).toBe(false);
-        expect(capabilities.hasBackgroundSync).toBe(false);
-        expect(capabilities.hasNativeSharing).toBe(false);
-      });
+  describe('getCapabilities', () => {
+    it('should return native capabilities for native platforms', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('android');
+      
+      const capabilities = detector.getCapabilities();
+      
+      expect(capabilities.hasCamera).toBe(true);
+      expect(capabilities.hasBiometrics).toBe(true);
+      expect(capabilities.hasAppState).toBe(true);
+      expect(capabilities.hasDevice).toBe(true);
     });
 
-    describe('native capabilities', () => {
-      beforeEach(() => {
-        cleanup();
-        cleanup = mockWindow({ getPlatform: () => 'ios' });
-      });
+    it('should return web capabilities for web platform', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(false);
+      
+      const capabilities = detector.getCapabilities();
+      
+      expect(capabilities.hasCamera).toBe(false);
+      expect(capabilities.hasBiometrics).toBe(false);
+      expect(capabilities.hasAppState).toBe(false);
+      expect(capabilities.hasDevice).toBe(false);
+    });
 
-      it('should assume all capabilities are available for native', () => {
-        const capabilities = detector.getCapabilities();
-        
-        expect(capabilities.hasCamera).toBe(true);
-        expect(capabilities.hasGeolocation).toBe(true);
-        expect(capabilities.hasNotifications).toBe(true);
-        expect(capabilities.hasStorage).toBe(true);
-        expect(capabilities.hasBiometrics).toBe(true);
-        expect(capabilities.hasAppState).toBe(true);
-        expect(capabilities.hasBackgroundSync).toBe(true);
-        expect(capabilities.hasNativeSharing).toBe(true);
-      });
+    it('should return common capabilities for all platforms', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(false);
+      
+      const capabilities = detector.getCapabilities();
+      
+      expect(capabilities.hasGeolocation).toBe(true);
+      expect(capabilities.hasStorage).toBe(true);
+      expect(capabilities.hasNetwork).toBe(true);
     });
 
     it('should cache capabilities result', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('android');
+      
       const capabilities1 = detector.getCapabilities();
       const capabilities2 = detector.getCapabilities();
       
-      expect(capabilities1).toBe(capabilities2); // Same object reference
+      expect(capabilities1).toEqual(capabilities2);
+      expect(capabilities1).toBe(capabilities2); // Same reference
     });
   });
 
-  describe('reset()', () => {
-    it('should clear cached platform and capabilities', () => {
-      // Get initial values to cache them
+  describe('reset', () => {
+    it('should clear cached values', () => {
+      mockCapacitor.isNativePlatform.mockReturnValue(true);
+      mockCapacitor.getPlatform.mockReturnValue('android');
+      
       detector.getPlatform();
-      detector.getCapabilities();
-      
-      // Reset and change environment
       detector.reset();
-      cleanup();
-      cleanup = mockWindow({ getPlatform: () => 'android' });
+      detector.getPlatform();
       
-      // Should detect new platform
-      expect(detector.getPlatform()).toBe('android');
+      expect(mockCapacitor.getPlatform).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -21,7 +21,7 @@ export function normalizeChargingStation(station: ChargingStationResponseDto): C
 } {
   try {
     // Extract and normalize coordinates
-    const coordinates = coordinateArrayToObject(station.location.coordinates);
+    const coordinates = coordinateArrayToObject((station as any).location.coordinates);
     
     // Calculate available connectors
     const availableConnectors = station.connectors?.filter(
@@ -30,7 +30,7 @@ export function normalizeChargingStation(station: ChargingStationResponseDto): C
     
     // Determine status color
     let statusColor: 'green' | 'yellow' | 'red';
-    switch (station.status) {
+    switch ((station as any).status) {
       case 'OPERATIONAL':
         statusColor = availableConnectors > 0 ? 'green' : 'yellow';
         break;
@@ -50,13 +50,8 @@ export function normalizeChargingStation(station: ChargingStationResponseDto): C
       coordinates,
       availableConnectors,
       statusColor,
-      // Ensure rating is within valid range
-      rating: Math.max(0, Math.min(5, station.rating || 0)),
       // Ensure arrays are defined
       connectors: station.connectors || [],
-      amenities: station.amenities || [],
-      pricing: station.pricing || [],
-      reviews: station.reviews || [],
     };
   } catch (error) {
     throw new TransformationError(

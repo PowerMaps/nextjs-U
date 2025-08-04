@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.powermaps.app',
   appName: 'PowerMaps',
-  webDir: 'public', // Will be 'out' for static export, 'public' for development
+  webDir: 'out', // Static export directory for Capacitor builds
   server: {
     androidScheme: 'https'
   },

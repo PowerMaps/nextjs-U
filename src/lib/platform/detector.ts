@@ -1,65 +1,48 @@
 /**
- * Platform detection utilities for identifying web vs native environments
+ * Platform detection utilities for universal app deployment
  */
 
-import type { Platform, PlatformCapabilities, PlatformDetector } from './types';
+import { Capacitor } from '@capacitor/core';
+import type { Platform, PlatformDetector, PlatformCapabilities } from './types';
 
-class PlatformDetectorImpl implements PlatformDetector {
+class UniversalPlatformDetector implements PlatformDetector {
   private _platform: Platform | null = null;
   private _capabilities: PlatformCapabilities | null = null;
 
   /**
-   * Detects if the app is running in a native Capacitor environment
+   * Check if running in native Capacitor environment
    */
   isNative(): boolean {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    // Check for Capacitor global object
-    return !!(window as any).Capacitor;
+    return Capacitor.isNativePlatform();
   }
 
   /**
-   * Detects if the app is running in a web browser
+   * Check if running in web browser
    */
   isWeb(): boolean {
     return !this.isNative();
   }
 
   /**
-   * Gets the current platform (web, ios, or android)
+   * Get the current platform
    */
   getPlatform(): Platform {
     if (this._platform) {
       return this._platform;
     }
 
-    if (this.isWeb()) {
-      this._platform = 'web';
-      return this._platform;
-    }
-
-    // For native environments, check Capacitor platform info
-    const capacitor = (window as any).Capacitor;
-    if (capacitor?.getPlatform) {
-      const platform = capacitor.getPlatform();
-      this._platform = platform === 'ios' ? 'ios' : 'android';
+    if (this.isNative()) {
+      const platform = Capacitor.getPlatform();
+      this._platform = platform as Platform;
     } else {
-      // Fallback detection based on user agent
-      const userAgent = navigator.userAgent.toLowerCase();
-      if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
-        this._platform = 'ios';
-      } else {
-        this._platform = 'android';
-      }
+      this._platform = 'web';
     }
 
     return this._platform;
   }
 
   /**
-   * Gets platform-specific capabilities
+   * Get platform capabilities
    */
   getCapabilities(): PlatformCapabilities {
     if (this._capabilities) {
@@ -68,76 +51,38 @@ class PlatformDetectorImpl implements PlatformDetector {
 
     const platform = this.getPlatform();
     
-    if (platform === 'web') {
-      this._capabilities = {
-        hasCamera: this.hasWebCamera(),
-        hasGeolocation: this.hasWebGeolocation(),
-        hasNotifications: this.hasWebNotifications(),
-        hasStorage: this.hasWebStorage(),
-        hasBiometrics: false, // Not available in web
-        hasAppState: false, // Not available in web
-        hasBackgroundSync: this.hasServiceWorker(),
-        hasNativeSharing: this.hasWebShare(),
-      };
-    } else {
-      // Native capabilities - assume all are available when Capacitor is present
-      // These will be refined when actual Capacitor plugins are integrated
-      this._capabilities = {
-        hasCamera: true,
-        hasGeolocation: true,
-        hasNotifications: true,
-        hasStorage: true,
-        hasBiometrics: true,
-        hasAppState: true,
-        hasBackgroundSync: true,
-        hasNativeSharing: true,
-      };
-    }
+    this._capabilities = {
+      hasCamera: this.isNative(),
+      hasGeolocation: true, // Available on all platforms
+      hasNotifications: this.isNative() || this.hasWebNotificationSupport(),
+      hasStorage: true, // Available on all platforms
+      hasBiometrics: this.isNative(),
+      hasAppState: this.isNative(),
+      hasNetwork: true, // Available on all platforms
+      hasDevice: this.isNative()
+    };
 
     return this._capabilities;
   }
 
   /**
-   * Resets cached platform detection (useful for testing)
+   * Check if web notifications are supported
+   */
+  private hasWebNotificationSupport(): boolean {
+    return typeof window !== 'undefined' && 'Notification' in window;
+  }
+
+  /**
+   * Reset cached values (useful for testing)
    */
   reset(): void {
     this._platform = null;
     this._capabilities = null;
   }
-
-  // Private helper methods for web capability detection
-
-  private hasWebCamera(): boolean {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  }
-
-  private hasWebGeolocation(): boolean {
-    return !!navigator.geolocation;
-  }
-
-  private hasWebNotifications(): boolean {
-    return 'Notification' in window;
-  }
-
-  private hasWebStorage(): boolean {
-    try {
-      return typeof Storage !== 'undefined' && !!window.localStorage;
-    } catch {
-      return false;
-    }
-  }
-
-  private hasServiceWorker(): boolean {
-    return 'serviceWorker' in navigator;
-  }
-
-  private hasWebShare(): boolean {
-    return !!(navigator as any).share;
-  }
 }
 
 // Export singleton instance
-export const platformDetector = new PlatformDetectorImpl();
+export const platformDetector = new UniversalPlatformDetector();
 
 // Export class for testing
-export { PlatformDetectorImpl };
+export { UniversalPlatformDetector };

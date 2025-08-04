@@ -1,13 +1,19 @@
-"use client";
-
 import React from 'react';
-import { useParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { NotificationDetail } from '@/components/notifications/notification-detail';
 
-export default function NotificationDetailPage() {
-  const params = useParams();
-  const id = params?.id;
+// Generate static params for static export
+export async function generateStaticParams() {
+  // Return a sample ID for static export
+  return [{ id: 'sample' }];
+}
+
+interface NotificationDetailPageProps {
+  params: { id: string };
+}
+
+export default function NotificationDetailPage({ params }: NotificationDetailPageProps) {
+  const id = params.id;
 
   // Placeholder for fetching notification data
   const notification = {

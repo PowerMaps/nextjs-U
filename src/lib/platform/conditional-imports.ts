@@ -6,43 +6,30 @@ import { platformDetector } from './detector';
 import type { PlatformAdapter } from './types';
 
 /**
- * Error thrown when a platform-specific module fails to load
+ * Dynamically import platform-specific implementation
  */
-export class PlatformImportError extends Error {
-  constructor(
-    public platform: string,
-    public moduleName: string,
-    public originalError?: Error
-  ) {
-    super(`Failed to import ${moduleName} for platform ${platform}: ${originalError?.message || 'Unknown error'}`);
-    this.name = 'PlatformImportError';
-  }
-}
-
-/**
- * Conditionally imports a module based on the current platform
- */
-export async function conditionalImport<T>(adapter: PlatformAdapter<T>): Promise<T> {
-  const isNative = platformDetector.isNative();
-  
+export async function importPlatformModule<T>(adapter: PlatformAdapter<T>): Promise<T> {
   try {
-    if (isNative) {
-      return await adapter.native();
+    if (platformDetector.isNative()) {
+      const module = await adapter.native();
+      return module;
     } else {
-      return await adapter.web();
+      const module = await adapter.web();
+      return module;
     }
   } catch (error) {
-    const platform = isNative ? 'native' : 'web';
-    throw new PlatformImportError(
-      platform,
-      'unknown',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    console.error('Failed to import platform module:', error);
+    // Fallback to web implementation if native fails
+    if (platformDetector.isNative()) {
+      console.warn('Falling back to web implementation');
+      return await adapter.web();
+    }
+    throw error;
   }
 }
 
 /**
- * Creates a platform adapter with web and native implementations
+ * Create a platform adapter with lazy loading
  */
 export function createPlatformAdapter<T>(
   webImport: () => Promise<T>,
@@ -50,73 +37,46 @@ export function createPlatformAdapter<T>(
 ): PlatformAdapter<T> {
   return {
     web: webImport,
-    native: nativeImport,
+    native: nativeImport
   };
 }
 
 /**
- * Conditionally imports a module with fallback support
+ * Execute platform-specific code
  */
-export async function conditionalImportWithFallback<T>(
-  adapter: PlatformAdapter<T>,
-  fallback?: () => Promise<T>
-): Promise<T> {
-  try {
-    return await conditionalImport(adapter);
-  } catch (error) {
-    if (fallback) {
-      console.warn('Platform-specific import failed, using fallback:', error);
-      return await fallback();
-    }
-    throw error;
+export function executePlatformSpecific<T>(
+  webFn: () => T,
+  nativeFn: () => T
+): T {
+  if (platformDetector.isNative()) {
+    return nativeFn();
+  } else {
+    return webFn();
   }
 }
 
 /**
- * Lazy loading wrapper for platform-specific components
+ * Get platform-specific configuration
  */
-export function createPlatformComponent<T>(
-  webComponent: () => Promise<{ default: T }>,
-  nativeComponent: () => Promise<{ default: T }>
-): () => Promise<{ default: T }> {
-  return async () => {
-    const adapter = createPlatformAdapter(webComponent, nativeComponent);
-    return await conditionalImport(adapter);
-  };
-}
-
-/**
- * Utility to check if a platform-specific module is available
- */
-export async function isPlatformModuleAvailable<T>(
-  adapter: PlatformAdapter<T>
-): Promise<boolean> {
-  try {
-    await conditionalImport(adapter);
-    return true;
-  } catch {
-    return false;
+export function getPlatformConfig<T>(config: {
+  web: T;
+  native: T;
+  ios?: T;
+  android?: T;
+}): T {
+  const platform = platformDetector.getPlatform();
+  
+  if (platform === 'ios' && config.ios) {
+    return config.ios;
   }
-}
-
-/**
- * Batch import multiple platform-specific modules
- */
-export async function batchConditionalImport<T extends Record<string, PlatformAdapter<any>>>(
-  adapters: T
-): Promise<{ [K in keyof T]: Awaited<ReturnType<typeof conditionalImport<any>>> }> {
-  const results = {} as any;
   
-  await Promise.all(
-    Object.entries(adapters).map(async ([key, adapter]) => {
-      try {
-        results[key] = await conditionalImport(adapter);
-      } catch (error) {
-        console.error(`Failed to import ${key}:`, error);
-        results[key] = null;
-      }
-    })
-  );
+  if (platform === 'android' && config.android) {
+    return config.android;
+  }
   
-  return results;
+  if (platformDetector.isNative()) {
+    return config.native;
+  }
+  
+  return config.web;
 }

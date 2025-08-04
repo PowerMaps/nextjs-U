@@ -51,7 +51,6 @@ export function MapExample() {
           initialLat={36.1627}
           initialZoom={10}
           stations={sampleStations}
-          routeGeoJSON={sampleRoute}
           showControls={true}
         />
       </div>

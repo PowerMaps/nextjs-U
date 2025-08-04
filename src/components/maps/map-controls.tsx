@@ -44,7 +44,7 @@ export function MapControls({
   
   // Make navigation optional - only use if NavigationProvider is available
   let isNavigating = false;
-  let startNavigation = () => {};
+  let startNavigation = (route?: any) => {};
   let stopNavigation = () => {};
   
   try {

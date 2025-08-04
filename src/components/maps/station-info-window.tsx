@@ -217,7 +217,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                         </span>
                       )}
                     </div>
-                    {connector.status === 'available' && (
+                    {connector.status === 'AVAILABLE' && (
                       <Button
                         size="sm"
                         variant={selectedConnectorId === connector.id ? "default" : "outline"}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import dynamic from 'next/dynamic';
+import PlatformInfo from "@/components/platform/PlatformInfo";
 
 const LazyLoadedComponent = dynamic(() => import('@/components/lazy-loaded-component'), {
   loading: () => <p>Loading lazy component...</p>,
@@ -174,8 +175,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Lazy Loaded Component Section */}
+      {/* Platform Info Section */}
       <section className="bg-gray-100 py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
+            Platform Detection Test
+          </h2>
+          <div className="max-w-2xl mx-auto">
+            <PlatformInfo />
+          </div>
+        </div>
+      </section>
+
+      {/* Lazy Loaded Component Section */}
+      <section className="bg-white py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-8">
             Dynamic Content Example

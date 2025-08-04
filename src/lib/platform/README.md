@@ -1,31 +1,26 @@
-# Platform Detection and Conditional Import System
+# Platform Detection and Conditional Imports
 
-This module provides utilities for detecting the current platform (web vs native) and conditionally importing platform-specific modules for universal app deployment.
+This module provides platform detection and conditional import capabilities for universal app deployment across web, iOS, and Android platforms using Capacitor.
 
 ## Features
 
-- **Platform Detection**: Automatically detects whether the app is running in a web browser or native Capacitor environment
-- **Conditional Imports**: Dynamically imports platform-specific modules based on the current environment
-- **Capability Detection**: Identifies available platform-specific capabilities
-- **Graceful Fallbacks**: Provides fallback mechanisms when platform-specific features are unavailable
-- **TypeScript Support**: Full TypeScript support with proper type definitions
+- **Platform Detection**: Detect whether the app is running on web, iOS, or Android
+- **Conditional Imports**: Dynamically import platform-specific modules
+- **Platform Adapters**: Create adapters that automatically load the correct implementation
+- **Capability Detection**: Check what features are available on the current platform
+- **Configuration Management**: Get platform-specific configurations
 
-## Usage
-
-### Basic Platform Detection
+## Quick Start
 
 ```typescript
-import { isNative, isWeb, getPlatform, getCapabilities } from '@/lib/platform';
+import { isNative, getPlatform, getCapabilities } from '@/lib/platform';
 
-// Check current platform
+// Check platform
 if (isNative()) {
-  console.log('Running in native app');
+  console.log('Running on mobile:', getPlatform());
 } else {
-  console.log('Running in web browser');
+  console.log('Running on web');
 }
-
-// Get specific platform
-const platform = getPlatform(); // 'web' | 'ios' | 'android'
 
 // Check capabilities
 const capabilities = getCapabilities();
@@ -34,143 +29,204 @@ if (capabilities.hasCamera) {
 }
 ```
 
-### Conditional Imports
+## Platform Detection
+
+### Basic Detection
 
 ```typescript
-import { createPlatformAdapter, conditionalImport } from '@/lib/platform';
+import { platformDetector, isNative, isWeb, getPlatform } from '@/lib/platform';
 
-// Create platform-specific adapter
-const storageAdapter = createPlatformAdapter(
+// Check if running in native app
+const native = isNative(); // boolean
+
+// Check if running in web browser
+const web = isWeb(); // boolean
+
+// Get specific platform
+const platform = getPlatform(); // 'web' | 'ios' | 'android'
+```
+
+### Capability Detection
+
+```typescript
+import { getCapabilities } from '@/lib/platform';
+
+const capabilities = getCapabilities();
+// {
+//   hasCamera: boolean;
+//   hasGeolocation: boolean;
+//   hasNotifications: boolean;
+//   hasStorage: boolean;
+//   hasBiometrics: boolean;
+//   hasAppState: boolean;
+//   hasNetwork: boolean;
+//   hasDevice: boolean;
+// }
+```
+
+## Conditional Imports
+
+### Creating Platform Adapters
+
+```typescript
+import { createPlatformAdapter, importPlatformModule } from '@/lib/platform';
+
+// Define interface
+interface StorageService {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string): Promise<void>;
+}
+
+// Create adapter
+const storageAdapter = createPlatformAdapter<StorageService>(
   // Web implementation
-  async () => ({
-    get: (key: string) => localStorage.getItem(key),
-    set: (key: string, value: string) => localStorage.setItem(key, value),
-  }),
+  async () => {
+    const { WebStorage } = await import('./web-storage');
+    return new WebStorage();
+  },
   // Native implementation
   async () => {
-    const { Preferences } = await import('@capacitor/preferences');
-    return {
-      get: async (key: string) => (await Preferences.get({ key })).value,
-      set: async (key: string, value: string) => Preferences.set({ key, value }),
-    };
+    const { NativeStorage } = await import('./native-storage');
+    return new NativeStorage();
   }
 );
 
-// Use the adapter
-const storage = await conditionalImport(storageAdapter);
-await storage.set('user-preference', 'dark-mode');
+// Use adapter
+const storage = await importPlatformModule(storageAdapter);
+await storage.set('key', 'value');
 ```
 
-### With Fallbacks
+### Platform-Specific Execution
 
 ```typescript
-import { conditionalImportWithFallback } from '@/lib/platform';
+import { executePlatformSpecific } from '@/lib/platform';
 
-const storage = await conditionalImportWithFallback(
-  storageAdapter,
-  // Fallback to in-memory storage
-  async () => {
-    const memoryStorage = new Map();
-    return {
-      get: (key: string) => memoryStorage.get(key),
-      set: (key: string, value: string) => memoryStorage.set(key, value),
-    };
+const result = executePlatformSpecific(
+  // Web function
+  () => localStorage.getItem('key'),
+  // Native function
+  () => nativeStorage.get('key')
+);
+```
+
+## Configuration Management
+
+### Platform-Specific Config
+
+```typescript
+import { getPlatformConfig } from '@/lib/platform';
+
+const config = getPlatformConfig({
+  web: {
+    apiUrl: 'https://web-api.example.com',
+    timeout: 5000
+  },
+  native: {
+    apiUrl: 'https://mobile-api.example.com',
+    timeout: 10000
+  },
+  android: {
+    apiUrl: 'https://android-api.example.com',
+    timeout: 8000
+  },
+  ios: {
+    apiUrl: 'https://ios-api.example.com',
+    timeout: 8000
   }
+});
+```
+
+## Common Use Cases
+
+### 1. Storage Abstraction
+
+```typescript
+// Create storage service that works on all platforms
+const storageService = await importPlatformModule(
+  createPlatformAdapter(
+    () => import('./web-storage'),
+    () => import('./capacitor-storage')
+  )
 );
 ```
 
-### Platform-Specific Components
+### 2. HTTP Client Selection
 
 ```typescript
-import { createPlatformComponent } from '@/lib/platform';
-
-const MapComponent = createPlatformComponent(
-  // Web component
-  async () => import('./WebMapComponent'),
-  // Native component
-  async () => import('./NativeMapComponent')
+// Use appropriate HTTP client for platform
+const httpClient = await importPlatformModule(
+  createPlatformAdapter(
+    () => import('./axios-client'),
+    () => import('./capacitor-http-client')
+  )
 );
-
-// Use in React
-const LazyMapComponent = React.lazy(MapComponent);
 ```
 
-## API Reference
-
-### Platform Detection
-
-- `isNative(): boolean` - Returns true if running in Capacitor
-- `isWeb(): boolean` - Returns true if running in web browser
-- `getPlatform(): Platform` - Returns 'web', 'ios', or 'android'
-- `getCapabilities(): PlatformCapabilities` - Returns available platform capabilities
-
-### Conditional Imports
-
-- `createPlatformAdapter<T>(webImport, nativeImport): PlatformAdapter<T>` - Creates platform adapter
-- `conditionalImport<T>(adapter): Promise<T>` - Imports platform-specific module
-- `conditionalImportWithFallback<T>(adapter, fallback): Promise<T>` - Imports with fallback
-- `createPlatformComponent<T>(webComponent, nativeComponent)` - Creates platform-specific component loader
-- `isPlatformModuleAvailable<T>(adapter): Promise<boolean>` - Checks if module is available
-- `batchConditionalImport<T>(adapters): Promise<T>` - Imports multiple modules
-
-### Types
+### 3. Notification Service
 
 ```typescript
-type Platform = 'web' | 'ios' | 'android';
+// Platform-specific notifications
+const notificationService = await importPlatformModule(
+  createPlatformAdapter(
+    () => import('./web-notifications'),
+    () => import('./capacitor-notifications')
+  )
+);
+```
 
-interface PlatformCapabilities {
-  hasCamera: boolean;
-  hasGeolocation: boolean;
-  hasNotifications: boolean;
-  hasStorage: boolean;
-  hasBiometrics: boolean;
-  hasAppState: boolean;
-  hasBackgroundSync: boolean;
-  hasNativeSharing: boolean;
-}
+### 4. Camera Access
 
-interface PlatformAdapter<T> {
-  web: () => Promise<T>;
-  native: () => Promise<T>;
+```typescript
+// Only available on native platforms
+const capabilities = getCapabilities();
+if (capabilities.hasCamera) {
+  const camera = await importPlatformModule(cameraAdapter);
+  const photo = await camera.takePicture();
 }
 ```
 
-## Implementation Details
+## Testing
 
-### Platform Detection Logic
+The platform detection system includes comprehensive test utilities:
 
-1. **Native Detection**: Checks for `window.Capacitor` object
-2. **Platform Identification**: Uses `Capacitor.getPlatform()` when available
-3. **Fallback Detection**: Uses user agent string for platform identification
-4. **Capability Detection**: Checks for specific APIs and features
+```typescript
+import { UniversalPlatformDetector } from '@/lib/platform';
 
-### Conditional Import Strategy
+// Create detector instance for testing
+const detector = new UniversalPlatformDetector();
 
-1. **Runtime Detection**: Determines platform at runtime
-2. **Dynamic Imports**: Uses ES6 dynamic imports for code splitting
-3. **Error Handling**: Provides detailed error information for failed imports
-4. **Caching**: Caches platform detection results for performance
-
-### Testing
-
-The module includes comprehensive unit tests covering:
-- Platform detection in various environments
-- Conditional import functionality
-- Error handling and fallbacks
-- Capability detection
-- Edge cases and error conditions
-
-Run tests with:
-```bash
-npm test -- src/lib/platform
+// Reset cached values between tests
+detector.reset();
 ```
 
-## Integration with Universal App
+## Build Integration
 
-This platform detection system is designed to work with:
-- **Next.js 14+** for web deployment
-- **Capacitor 5+** for native mobile deployment
-- **Existing codebase** with minimal changes required
-- **Build system** that supports both web and native targets
+This system works with your existing build configuration:
 
-The system enables a single codebase to deploy to web, iOS, and Android platforms while providing platform-specific optimizations and features.
+- **Web builds**: Uses standard Next.js build process
+- **Native builds**: Uses Capacitor static export with platform detection
+- **Development**: Works in both web dev server and native development
+
+## Error Handling
+
+The system includes automatic fallbacks:
+
+- If native module import fails, falls back to web implementation
+- Graceful degradation when platform features are unavailable
+- Console warnings for debugging import issues
+
+## Performance
+
+- Platform detection results are cached
+- Conditional imports use dynamic imports for code splitting
+- Only loads platform-specific code when needed
+- Minimal overhead for platform detection
+
+## TypeScript Support
+
+Full TypeScript support with:
+
+- Strict typing for platform detection
+- Generic types for platform adapters
+- Interface definitions for all capabilities
+- Type-safe configuration objects
