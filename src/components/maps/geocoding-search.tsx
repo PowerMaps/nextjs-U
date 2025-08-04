@@ -16,7 +16,9 @@ export function GeocodingSearch({ onSelectLocation }: GeocodingSearchProps) {
 
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   const debounceRef = useRef<NodeJS.Timeout>();
-
+  console.log('Google Maps API Key loaded:', GOOGLE_MAPS_API_KEY ? 'Yes' : 'No');
+  console.log('API Key first 10 chars:', GOOGLE_MAPS_API_KEY ? GOOGLE_MAPS_API_KEY.substring(0, 10) + '...' : 'None');
+  
   const performSearch = useCallback(async (query: string) => {
     if (!query) {
       setResults([]);

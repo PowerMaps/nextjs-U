@@ -32,6 +32,7 @@ function MapPageContent() {
   const [destination, setDestination] = useState<string | Coordinates>('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const [currentRoute, setCurrentRoute] = useState<EVRouteResponse | null>(null);
+  const [routeDetails, setRouteDetails] = useState<any>(null);
   const [mapCenter, setMapCenter] = useState<Coordinates>({ lat: 32.7128, lng: 10.0060 }); // Default to NYC
   const [poiMarkers, setPoiMarkers] = useState<Array<{
     id: string;
@@ -49,7 +50,7 @@ function MapPageContent() {
   const { data: nearbyStations } = useNearbyStations(mapCenter.lat, mapCenter.lng, 25);
   const calculateRoute = useCalculateRoute();
   const { toast } = useToast();
-  
+
   // Navigation hooks
   const navigation = useNavigation();
 
@@ -71,7 +72,13 @@ function MapPageContent() {
 
   // Handle route calculation
   const handleCalculateRoute = async () => {
+    console.log('handleCalculateRoute called');
+    console.log('origin:', origin);
+    console.log('destination:', destination);
+    console.log('selectedVehicleId:', selectedVehicleId);
+    
     if (!origin || !destination || !selectedVehicleId) {
+      console.log('Missing required data for route calculation');
       return;
     }
 
@@ -116,11 +123,33 @@ function MapPageContent() {
     };
 
     try {
+      console.log('Sending route request:', routeRequest);
       const result = await calculateRoute.mutateAsync(routeRequest);
       console.log('Route calculation result:', result);
-      setCurrentRoute(result.route);
+      console.log('Route data structure:', result.route);
+      console.log('Route type:', typeof result.route);
+      console.log('Charging stations:', result.chargingStations);
+      if (result.route) {
+        console.log('Route keys:', Object.keys(result.route));
+      }
+      if (result.chargingStations) {
+        console.log('Charging stations count:', result.chargingStations.length);
+      }
+      setCurrentRoute(result);
+      setRouteDetails(result);
+      
+      toast({
+        title: "Route calculated",
+        description: `Found route with ${result.chargingStations?.length || 0} charging stops`,
+      });
+
     } catch (error) {
       console.error('Route calculation failed:', error);
+      toast({
+        title: "Route calculation failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
     }
   };
 
@@ -283,7 +312,7 @@ function MapPageContent() {
 
   // Format route statistics
   const getRouteStats = () => {
-    if (!currentRoute?.analysis) {
+    if (!routeDetails?.analysis) {
       return {
         distance: '-- km',
         duration: '-- min',
@@ -294,21 +323,21 @@ function MapPageContent() {
       };
     }
 
-    const { analysis } = currentRoute;
+    const { analysis } = routeDetails;
     console.log(analysis);
-    
+
     return {
       distance: `${Math.round(analysis.totalDistance)} km`,
-      duration: `${Math.round(analysis.totalTime )} min`,
+      duration: `${Math.round(analysis.totalTime)} min`,
       energyConsumption: `${analysis.energyConsumption} kWh`,
       estimatedCost: `${analysis.estimatedCost} €`,
-      chargingTime: `${Math.round(analysis.chargingTime )} min`,
+      chargingTime: `${Math.round(analysis.chargingTime)} min`,
       batteryLevel: `${analysis.batteryLevelAtDestination}%`,
     };
   };
 
   const routeStats = getRouteStats();
-  
+
   return (
     <>
       {/* Full-screen map container */}
@@ -319,7 +348,7 @@ function MapPageContent() {
           key={selectedStationId ? 'with-sidebar' : 'without-sidebar'}
           initialLat={mapCenter.lat}
           initialLng={mapCenter.lng}
-          routeData={currentRoute?.route}
+          routeData={currentRoute}
           stations={(() => {
             // Handle route charging stations first
             if (currentRoute?.chargingStations && currentRoute.chargingStations.length > 0) {
@@ -455,6 +484,52 @@ function MapPageContent() {
                       <X className="h-4 w-4" />
                     </Button>
                   )}
+                  
+                  {/* Test Route Button */}
+                  <Button
+                    onClick={() => {
+                      console.log('Setting test route');
+                      const testRoute = {
+                        success: true,
+                        route: {
+                          coordinates: [
+                            [10.0, 36.8], // Tunis area coordinates
+                            [10.1, 36.85],
+                            [10.2, 36.9],
+                            [10.3, 36.95]
+                          ]
+                        },
+                        chargingStations: [
+                          {
+                            id: 'test-station-1',
+                            name: 'Test Station 1',
+                            latitude: 36.85,
+                            longitude: 10.1,
+                            isActive: true,
+                            chargingTime: 30,
+                            cost: 15.50,
+                            batteryLevelAfter: 80,
+                            connectorType: 'Type 2'
+                          }
+                        ],
+                        analysis: {
+                          totalDistance: 50,
+                          totalTime: 3600,
+                          estimatedCost: 15.50,
+                          energyConsumption: 12,
+                          chargingTime: 1800,
+                          batteryLevelAtDestination: 80
+                        }
+                      };
+                      setCurrentRoute(testRoute);
+                      setRouteDetails(testRoute);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Test Route
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -607,7 +682,7 @@ function MapPageContent() {
               </div>
             </div>
           </div>
-)}
+        )}
 
         {/* Station Details Sidebar */}
         {selectedStationId && (
@@ -624,16 +699,16 @@ function MapPageContent() {
           <div className="absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
             {/* Navigation Panel */}
             <NavigationPanel
-              route={currentRoute.route}
+              route={currentRoute?.route}
               isNavigating={navigation.isNavigating}
-              onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
+              onStartNavigation={() => navigation.startNavigation(currentRoute?.route)}
               onStopNavigation={navigation.stopNavigation}
               onPauseNavigation={navigation.pauseNavigation}
               onResumeNavigation={navigation.resumeNavigation}
               currentStepIndex={navigation.currentStepIndex}
               onStepChange={navigation.setCurrentStep}
             />
-            
+
             <RouteStatisticsPanel
               distance={routeStats.distance}
               duration={routeStats.duration}
@@ -657,43 +732,43 @@ function MapPageContent() {
                     <span className="text-muted-foreground">Final Battery:</span>
                     <div className="font-medium">{routeStats.batteryLevel}</div>
                   </div>
-                  {currentRoute.analysis.initialBatteryPercentage && (
+                  {routeDetails?.analysis?.initialBatteryPercentage && (
                     <div>
                       <span className="text-muted-foreground">Start Battery:</span>
-                      <div className="font-medium">{currentRoute.analysis.initialBatteryPercentage}%</div>
+                      <div className="font-medium">{routeDetails.analysis.initialBatteryPercentage}%</div>
                     </div>
                   )}
-                  {currentRoute.analysis.batteryCapacity && (
+                  {routeDetails?.analysis?.batteryCapacity && (
                     <div>
                       <span className="text-muted-foreground">Battery Capacity:</span>
-                      <div className="font-medium">{currentRoute.analysis.batteryCapacity} kWh</div>
+                      <div className="font-medium">{routeDetails?.analysis?.batteryCapacity} kWh</div>
                     </div>
                   )}
                 </div>
 
-                {currentRoute.metadata.vehicleEfficiency && (
+                {routeDetails?.metadata?.vehicleEfficiency && (
                   <div className="text-xs">
                     <span className="text-muted-foreground">Efficiency:</span>
-                    <span className="font-medium ml-1">{currentRoute.metadata.vehicleEfficiency} kWh/km</span>
+                    <span className="font-medium ml-1">{routeDetails?.metadata?.vehicleEfficiency} kWh/km</span>
                   </div>
                 )}
 
-                {currentRoute.metadata.weather && (
+                {routeDetails?.metadata?.weather && (
                   <div className="border-t pt-2">
                     <div className="text-xs font-medium mb-1">Weather Impact</div>
                     <div className="text-xs space-y-1">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Conditions:</span>
-                        <span>{currentRoute.metadata.weather.conditions}</span>
+                        <span>{routeDetails.metadata.weather.conditions}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Temperature:</span>
-                        <span>{currentRoute.metadata.weather.temperature}°C</span>
+                        <span>{routeDetails.metadata.weather.temperature}°C</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Range Impact:</span>
-                        <span className={currentRoute.metadata.weather.rangeImpact > 0 ? 'text-red-600' : 'text-green-600'}>
-                          {currentRoute.metadata.weather.rangeImpact > 0 ? '-' : '+'}{Math.abs(currentRoute.metadata.weather.rangeImpact)}%
+                        <span className={routeDetails.metadata.weather.rangeImpact > 0 ? 'text-red-600' : 'text-green-600'}>
+                          {routeDetails.metadata.weather.rangeImpact > 0 ? '-' : '+'}{Math.abs(routeDetails.metadata.weather.rangeImpact)}%
                         </span>
                       </div>
                     </div>
@@ -703,14 +778,14 @@ function MapPageContent() {
             </Card>
 
             {/* Cost Breakdown */}
-            {currentRoute.analysis.costBreakdown && currentRoute.analysis.costBreakdown.length > 0 && (
+            {routeDetails.analysis.costBreakdown && routeDetails.analysis.costBreakdown.length > 0 && (
               <Card className="shadow-lg">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Charging Costs</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2">
-                    {currentRoute.analysis.costBreakdown.map((station, index) => (
+                    {routeDetails.analysis.costBreakdown.map((station: any, index: any) => (
                       <div key={`${station.stationId}-${index}`} className="border rounded p-2">
                         <div className="font-medium text-xs">{station.stationName}</div>
                         <div className="text-xs text-muted-foreground">{station.connectorType} • {station.connectorPower}kW</div>
@@ -850,16 +925,16 @@ function MapPageContent() {
             <div className="p-4 space-y-4">
               {/* Navigation Panel - Mobile */}
               <NavigationPanel
-                route={currentRoute.route}
+                route={currentRoute?.route}
                 isNavigating={navigation.isNavigating}
-                onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
+                onStartNavigation={() => navigation.startNavigation(currentRoute?.route)}
                 onStopNavigation={navigation.stopNavigation}
                 onPauseNavigation={navigation.pauseNavigation}
                 onResumeNavigation={navigation.resumeNavigation}
                 currentStepIndex={navigation.currentStepIndex}
                 onStepChange={navigation.setCurrentStep}
               />
-              
+
               <RouteStatisticsPanel
                 distance={routeStats.distance}
                 duration={routeStats.duration}

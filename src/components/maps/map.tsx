@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ChargingStationMarkers } from './charging-station-markers';
 import { MapControls } from './map-controls';
+import { RouteVisualization } from './route-visualization';
 
 import { getMapStyle, MapTheme } from '@/lib/maps/map-themes';
 import { useMapContext } from '@/lib/contexts/map-context';
@@ -271,7 +272,7 @@ export function Map({
     };
   }, [initialLng, initialLat, initialZoom, mapTheme]);
 
-  const routePolylineRef = useRef<google.maps.Polyline | null>(null);
+  // Route rendering is now handled by RouteVisualization component
 
   // Update map theme when theme prop changes
   // useEffect(() => {
@@ -282,84 +283,7 @@ export function Map({
   //   }
   // }, [mapTheme, isLoaded]);
 
-  useEffect(() => {
-    if (!map.current || !isLoaded) return;
-
-    // Remove existing route
-    if (routePolylineRef.current) {
-      routePolylineRef.current.setMap(null);
-      routePolylineRef.current = null;
-    }
-
-    console.log('Route data received:', routeData);
-
-    if (routeData) {
-      let route: DirectionsRoute | null = null;
-
-      // Handle both DirectionsResponse and DirectionsRoute formats
-      if ('routes' in routeData && routeData.routes.length > 0) {
-        route = routeData.routes[0]; // Use first route
-        console.log('Using first route from routes array:', route);
-      } else if ('overview_polyline' in routeData) {
-        route = routeData as DirectionsRoute;
-        console.log('Using route data directly:', route);
-      } else {
-        // Handle case where routeData might be GeoJSON or other format
-        console.log('Route data format not recognized, attempting GeoJSON fallback');
-        if (routeData && typeof routeData === 'object' && 'geometry' in routeData) {
-          const geoJsonRoute = routeData as any;
-          if (geoJsonRoute.geometry && geoJsonRoute.geometry.coordinates) {
-            console.log('Rendering GeoJSON route');
-            const path = geoJsonRoute.geometry.coordinates.map(([lng, lat]: [number, number]) => ({
-              lat,
-              lng
-            }));
-
-            routePolylineRef.current = new google.maps.Polyline({
-              path,
-              geodesic: true,
-              strokeColor: '#4285F4',
-              strokeOpacity: 1.0,
-              strokeWeight: 4,
-            });
-
-            routePolylineRef.current.setMap(map.current);
-            return;
-          }
-        }
-      }
-
-      if (route && route.overview_polyline && route.overview_polyline.points) {
-        console.log('Decoding polyline points:', route.overview_polyline.points);
-        // Decode the polyline points
-        const decodedPath = decodePolyline(route.overview_polyline.points);
-        console.log('Decoded path length:', decodedPath.length);
-
-        routePolylineRef.current = new google.maps.Polyline({
-          path: decodedPath,
-          geodesic: true,
-          strokeColor: '#4285F4',
-          strokeOpacity: 1.0,
-          strokeWeight: 4,
-        });
-
-        routePolylineRef.current.setMap(map.current);
-        console.log('Polyline added to map');
-
-        // Fit map to route bounds if available
-        if (route.bounds) {
-          const bounds = new google.maps.LatLngBounds(
-            new google.maps.LatLng(route.bounds.southwest.lat, route.bounds.southwest.lng),
-            new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng)
-          );
-          map.current.fitBounds(bounds);
-          console.log('Map fitted to route bounds');
-        }
-      } else {
-        console.log('No valid route or polyline data found');
-      }
-    }
-  }, [routeData, isLoaded]);
+  // Route rendering is now handled by RouteVisualization component
 
   // Handle POI markers
   useEffect(() => {
@@ -597,6 +521,13 @@ export function Map({
             stations={stations}
             onStationClick={onStationClick}
           />
+          {routeData && (
+            <RouteVisualization
+              map={map.current}
+              route={routeData}
+              onStationClick={onStationClick}
+            />
+          )}
         </>
       )}
       {isLoaded && showControls && <MapControls map={map.current} route={routeData} />}

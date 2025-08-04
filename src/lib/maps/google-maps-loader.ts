@@ -39,10 +39,26 @@ export async function loadGoogleMaps(): Promise<typeof google> {
     return Promise.resolve(window.google);
   }
 
-  const loader = getGoogleMapsLoader();
-  loadPromise = loader.load();
+  // Validate API key
+  if (!GOOGLE_MAPS_CONFIG.apiKey) {
+    console.error('Google Maps API key is missing. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment variable.');
+    throw new Error('Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment variable.');
+  }
 
-  return loadPromise;
+  console.log('Loading Google Maps with API key:', GOOGLE_MAPS_CONFIG.apiKey.substring(0, 10) + '...');
+
+  const loader = getGoogleMapsLoader();
+  
+  try {
+    loadPromise = loader.load();
+    const google = await loadPromise;
+    console.log('Google Maps loaded successfully');
+    return google;
+  } catch (error) {
+    console.error('Failed to load Google Maps:', error);
+    loadPromise = null; // Reset so we can try again
+    throw error;
+  }
 }
 
 /**
