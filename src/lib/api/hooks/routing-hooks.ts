@@ -4,13 +4,14 @@ import { useApiQuery, useApiMutation } from './base-hooks';
 import { RouteRequestDto, RouteResponseDto } from '../types';
 import { toast } from '@/components/ui/use-toast';
 import { offlineStorage } from './base-hooks';
+import { EVRouteResponse } from '@/app/dashboard/map/route-interfaces';
 
 // Key for storing routes in local storage for offline access
 const OFFLINE_ROUTES_KEY = 'offline_routes';
 
 // Hook to calculate a route
 export function useCalculateRoute() {
-  return useApiMutation<RouteResponseDto, RouteRequestDto>(
+  return useApiMutation<EVRouteResponse, RouteRequestDto>(
     '/routing/calculate',
     'POST',
     {

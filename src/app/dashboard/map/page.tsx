@@ -356,7 +356,7 @@ function MapPageContent() {
           key={selectedStationId ? 'with-sidebar' : 'without-sidebar'}
           initialLat={mapCenter.lat}
           initialLng={mapCenter.lng}
-          routeData={currentRoute}
+          routeData={currentRoute?.route}
           stations={(() => {
             // Handle route charging stations first
             if (currentRoute?.chargingStations && currentRoute.chargingStations.length > 0) {
@@ -542,7 +542,7 @@ function MapPageContent() {
                             batteryLevelAtDestination: 80
                           }
                         };
-                        setCurrentRoute(testRoute);
+                        // setCurrentRoute(testRoute);
                         setRouteDetails(testRoute);
                       }}
                       variant="outline"
