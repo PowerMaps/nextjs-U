@@ -32,7 +32,13 @@ export function NotificationPreferences() {
       <CardHeader>
         <CardTitle>Notification Preferences</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+    
+    </Card>
+  );
+}
+
+/*
+  <CardContent className="space-y-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Notification Channels</h3>
           <div className="flex items-center justify-between">
@@ -43,66 +49,65 @@ export function NotificationPreferences() {
               onCheckedChange={(checked) =>
                 setSettings({ ...settings, emailNotifications: checked })
               }
-            /> */}
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="push-notifications">Push Notifications</Label>
-            {/* <Switch
-              id="push-notifications"
-              checked={settings.pushNotifications}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, pushNotifications: checked })
-              }
-            /> */}
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="sms-notifications">SMS Notifications</Label>
-            {/* <Switch
-              id="sms-notifications"
-              checked={settings.smsNotifications}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, smsNotifications: checked })
-              }
-            /> */}
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Notification Types</h3>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="new-trip-alerts">New Trip Alerts</Label>
-            {/* <Switch
-              id="new-trip-alerts"
-              checked={settings.newTripAlerts}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, newTripAlerts: checked })
-              }
-            /> */}
+            /> 
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="push-notifications">Push Notifications</Label>
+              <Switch
+                id="push-notifications"
+                checked={settings.pushNotifications}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, pushNotifications: checked })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sms-notifications">SMS Notifications</Label>
+              <Switch
+                id="sms-notifications"
+                checked={settings.smsNotifications}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, smsNotifications: checked })
+                }
+              />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="charging-session-updates">Charging Session Updates</Label>
-            {/* <Switch
-              id="charging-session-updates"
-              checked={settings.chargingSessionUpdates}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, chargingSessionUpdates: checked })
-              }
-            /> */}
+  
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Notification Types</h3>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="new-trip-alerts">New Trip Alerts</Label>
+              <Switch
+                id="new-trip-alerts"
+                checked={settings.newTripAlerts}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, newTripAlerts: checked })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="charging-session-updates">Charging Session Updates</Label>
+              <Switch
+                id="charging-session-updates"
+                checked={settings.chargingSessionUpdates}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, chargingSessionUpdates: checked })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="promotional-offers">Promotional Offers</Label>
+              <Switch
+                id="promotional-offers"
+                checked={settings.promotionalOffers}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, promotionalOffers: checked })
+                }
+              />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="promotional-offers">Promotional Offers</Label>
-            {/* <Switch
-              id="promotional-offers"
-              checked={settings.promotionalOffers}
-              onCheckedChange={(checked) =>
-                setSettings({ ...settings, promotionalOffers: checked })
-              }
-            /> */}
-          </div>
-        </div>
-
-        <Button onClick={handleSavePreferences}>Save Preferences</Button>
-      </CardContent>
-    </Card>
-  );
-}
+  
+          <Button onClick={handleSavePreferences}>Save Preferences</Button>
+        </CardContent>
+        */
