@@ -11,11 +11,11 @@ import type { PlatformAdapter } from './types';
 export async function importPlatformModule<T>(adapter: PlatformAdapter<T>): Promise<T> {
   try {
     if (platformDetector.isNative()) {
-      const module = await adapter.native();
-      return module;
+      const platformModule = await adapter.native();
+      return platformModule;
     } else {
-      const module = await adapter.web();
-      return module;
+      const platformModule = await adapter.web();
+      return platformModule;
     }
   } catch (error) {
     console.error('Failed to import platform module:', error);

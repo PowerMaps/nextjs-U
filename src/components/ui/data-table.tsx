@@ -191,7 +191,7 @@ export function DataTable<TData, TValue>({
 
 // Helper function to create sortable column header
 export function createSortableHeader(title: string) {
-  return ({ column }: { column: any }) => {
+  const SortableHeader = ({ column }: { column: any }) => {
     return (
       <Button
         variant="ghost"
@@ -202,6 +202,9 @@ export function createSortableHeader(title: string) {
       </Button>
     )
   }
+  
+  SortableHeader.displayName = `SortableHeader-${title}`
+  return SortableHeader
 }
 
 // Helper function to create action column
@@ -211,57 +214,68 @@ export function createActionColumn<TData>(
     onClick: (row: TData) => void
   }>
 ) {
+  const ActionCell = ({ row }: { row: any }) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {actions.map((action, index) => (
+            <DropdownMenuItem
+              key={index}
+              onClick={() => action.onClick(row.original)}
+            >
+              {action.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  ActionCell.displayName = "ActionCell"
+
   return {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }: { row: any }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {actions.map((action, index) => (
-              <DropdownMenuItem
-                key={index}
-                onClick={() => action.onClick(row.original)}
-              >
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
+    cell: ActionCell,
   }
 }
 
 // Helper function to create checkbox column for row selection
 export function createSelectColumn<TData>() {
+  const SelectHeader = ({ table }: { table: any }) => (
+    <Checkbox
+      checked={
+        table.getIsAllPageRowsSelected() ||
+        (table.getIsSomePageRowsSelected() && "indeterminate")
+      }
+      onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      aria-label="Select all"
+    />
+  )
+
+  const SelectCell = ({ row }: { row: any }) => (
+    <Checkbox
+      checked={row.getIsSelected()}
+      onCheckedChange={(value) => row.toggleSelected(!!value)}
+      aria-label="Select row"
+    />
+  )
+
+  SelectHeader.displayName = "SelectHeader"
+  SelectCell.displayName = "SelectCell"
+
   return {
     id: "select",
-    header: ({ table }: { table: any }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }: { row: any }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    header: SelectHeader,
+    cell: SelectCell,
     enableSorting: false,
     enableHiding: false,
   }
