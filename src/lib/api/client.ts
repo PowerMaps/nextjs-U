@@ -50,7 +50,7 @@ class ApiClient {
     const token = authData ? JSON.parse(authData)?.state?.accessToken : null;
     
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5500/api/v1',
+      baseURL: process.env.API_URL || 'http://localhost:5500/api/v1',
       headers: {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
