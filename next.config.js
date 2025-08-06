@@ -7,8 +7,9 @@ const nextConfig = {
     instrumentationHook: false,
   },
   images: {
-    domains: ['localhost', 'api.charge-tn.com', 'api.powermaps.com'],
+    domains: ['localhost', 'api.charge-tn.com', 'api.powermaps.com', 'api.powermaps.tech'],
     unoptimized: isCapacitorBuild, // Disable image optimization for Capacitor builds
+    domains: ['localhost', 'api.powermaps.tech'], // Add your API domains here
   },
   env: {
     API_URL: process.env.API_URL || 'http://localhost:4000',
