@@ -197,15 +197,6 @@ export function Map({
             rotateControl: false,
             clickableIcons: true,
             gestureHandling: 'greedy', // Allow all gestures for better mobile experience
-            // Mobile-specific optimizations
-            ...(isMobile && {
-              zoomControlOptions: {
-                position: google.maps.ControlPosition.RIGHT_BOTTOM,
-                style: google.maps.ZoomControlStyle.SMALL
-              },
-              mapTypeControl: false,
-              fullscreenControl: false
-            }),
             styles: [
               {
                 featureType: 'poi.business',
@@ -249,6 +240,15 @@ export function Map({
               },
             ],
           };
+
+          // Add mobile-specific options separately to avoid type issues
+          if (isMobile) {
+            mapOptions.zoomControlOptions = {
+              position: google.maps.ControlPosition.RIGHT_BOTTOM,
+            };
+            mapOptions.mapTypeControl = false;
+            mapOptions.fullscreenControl = false;
+          }
 
           map.current = new google.maps.Map(mapContainer.current, mapOptions);
 
