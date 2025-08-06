@@ -181,7 +181,7 @@ export default function StationsMapPage() {
 
   return (
     <MapProvider>
-      <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
+      <div className="relative min-width overflow-hidden bg-gray-100">
         {/* Navigation Bar */}
         <div className="absolute top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b shadow-sm">
           <div className="flex items-center justify-between px-4 py-3">

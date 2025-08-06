@@ -268,36 +268,36 @@ export function RouteVisualization({ map, route, onStationClick }: RouteVisualiz
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-blue-600" />
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
               <div>
-                <div className="text-sm text-muted-foreground">Distance</div>
-                <div className="font-semibold">{route.analysis?.totalDistance || 0} km</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Distance</div>
+                <div className="font-semibold text-sm sm:text-base">{route.analysis?.totalDistance || 0} km</div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-green-600" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
               <div>
-                <div className="text-sm text-muted-foreground">Total Time</div>
-                <div className="font-semibold">{Math.round((route.analysis?.totalTime || 0) / 60)} min</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Total Time</div>
+                <div className="font-semibold text-sm sm:text-base">{Math.round((route.analysis?.totalTime || 0) / 60)} min</div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-yellow-600" />
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
               <div>
-                <div className="text-sm text-muted-foreground">Est. Cost</div>
-                <div className="font-semibold">${(route.analysis?.estimatedCost || 0).toFixed(2)}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Est. Cost</div>
+                <div className="font-semibold text-sm sm:text-base">${(route.analysis?.estimatedCost || 0).toFixed(2)}</div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-purple-600" />
+              <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
               <div>
-                <div className="text-sm text-muted-foreground">Charging Time</div>
-                <div className="font-semibold">{Math.round((route.analysis?.chargingTime || 0) / 60)} min</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Charging Time</div>
+                <div className="font-semibold text-sm sm:text-base">{Math.round((route.analysis?.chargingTime || 0) / 60)} min</div>
               </div>
             </div>
           </div>
