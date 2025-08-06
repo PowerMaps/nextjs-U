@@ -21,19 +21,7 @@ import {
   X,
   Loader2
 } from 'lucide-react';
-
-export enum ConnectorType {
-  TYPE_2 = 'type_2',
-  CCS = 'ccs',
-  CHADEMO = 'chademo',
-  TESLA = 'tesla',
-}
-
-enum ConnectorSpeed {
-  SLOW = 'slow',
-  FAST = 'fast',
-  RAPID = 'rapid',
-}
+import { ConnectorType, ConnectorSpeed } from '@/lib/api/hooks/user-station-hooks';
 
 interface ConnectorData {
   type: ConnectorType;

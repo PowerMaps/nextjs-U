@@ -127,7 +127,7 @@ export function VehicleListExample() {
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Efficiency</dt>
-                      <dd>{vehicle.efficiency} kWh/100km</dd>
+                      <dd>{vehicle.efficiency} kWh/1km</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Connector</dt>

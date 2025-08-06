@@ -20,7 +20,7 @@ export function AuthLayout({
   const { reason } = useAuthRedirect();
 
   // Get reason-specific messages
-  const getReasonMessage = (reason: string | null) => {
+  const getReasonMessage = (reason: string | null | undefined) => {
     switch (reason) {
       case 'session-expired':
         return {

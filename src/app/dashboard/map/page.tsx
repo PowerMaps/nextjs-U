@@ -18,13 +18,19 @@ import { EVRouteResponse, ChargingStation } from './route-interfaces';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Route, Zap, X, ArrowLeft, Menu } from 'lucide-react';
+import { Loader2, Route, Zap, X, ArrowLeft, Menu ,
+
+
+  MapPin, 
+
+} from 'lucide-react';
 import { MapProvider } from '@/lib/contexts/map-context';
 import { NavigationProvider, useNavigation } from '@/lib/contexts/navigation-context';
 import { NavigationPanel } from '@/components/maps/navigation-panel';
 import { NavigationInstructionOverlay } from '@/components/maps/navigation-instruction-overlay';
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
+import { metadata } from '@/app/layout';
 
 function MapPageContent() {
   // State for route planning
@@ -32,6 +38,7 @@ function MapPageContent() {
   const [destination, setDestination] = useState<string | Coordinates>('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const [currentRoute, setCurrentRoute] = useState<EVRouteResponse | null>(null);
+  const [routeDetails, setRouteDetails] = useState<any>(null);
   const [mapCenter, setMapCenter] = useState<Coordinates>({ lat: 32.7128, lng: 10.0060 }); // Default to NYC
   const [poiMarkers, setPoiMarkers] = useState<Array<{
     id: string;
@@ -49,7 +56,7 @@ function MapPageContent() {
   const { data: nearbyStations } = useNearbyStations(mapCenter.lat, mapCenter.lng, 25);
   const calculateRoute = useCalculateRoute();
   const { toast } = useToast();
-  
+
   // Navigation hooks
   const navigation = useNavigation();
 
@@ -71,7 +78,13 @@ function MapPageContent() {
 
   // Handle route calculation
   const handleCalculateRoute = async () => {
+    console.log('handleCalculateRoute called');
+    console.log('origin:', origin);
+    console.log('destination:', destination);
+    console.log('selectedVehicleId:', selectedVehicleId);
+    
     if (!origin || !destination || !selectedVehicleId) {
+      console.log('Missing required data for route calculation');
       return;
     }
 
@@ -116,11 +129,33 @@ function MapPageContent() {
     };
 
     try {
+      console.log('Sending route request:', routeRequest);
       const result = await calculateRoute.mutateAsync(routeRequest);
       console.log('Route calculation result:', result);
+      console.log('Route data structure:', result.route);
+      console.log('Route type:', typeof result.route);
+      console.log('Charging stations:', result.chargingStations);
+      if (result.route) {
+        console.log('Route keys:', Object.keys(result.route));
+      }
+      if (result.chargingStations) {
+        console.log('Charging stations count:', result.chargingStations.length);
+      }
       setCurrentRoute(result);
+      setRouteDetails(result);
+      
+      toast({
+        title: "Route calculated",
+        description: `Found route with ${result.chargingStations?.length || 0} charging stops`,
+      });
+
     } catch (error) {
       console.error('Route calculation failed:', error);
+      toast({
+        title: "Route calculation failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
     }
   };
 
@@ -283,7 +318,7 @@ function MapPageContent() {
 
   // Format route statistics
   const getRouteStats = () => {
-    if (!currentRoute?.analysis) {
+    if (!routeDetails?.analysis) {
       return {
         distance: '-- km',
         duration: '-- min',
@@ -294,32 +329,33 @@ function MapPageContent() {
       };
     }
 
-    const { analysis } = currentRoute;
+    const { analysis } = routeDetails;
     console.log(analysis);
-    
+
     return {
       distance: `${Math.round(analysis.totalDistance)} km`,
-      duration: `${Math.round(analysis.totalTime )} min`,
+      duration: `${Math.round(analysis.totalTime)} min`,
       energyConsumption: `${analysis.energyConsumption} kWh`,
       estimatedCost: `${analysis.estimatedCost} €`,
-      chargingTime: `${Math.round(analysis.chargingTime )} min`,
+      chargingTime: `${Math.round(analysis.chargingTime)} min`,
       batteryLevel: `${analysis.batteryLevelAtDestination}%`,
     };
   };
 
   const routeStats = getRouteStats();
-  
+
   return (
     <>
-      {/* Full-screen map container */}
-      <div className={`relative h-screen overflow-hidden bg-gray-100 transition-all duration-300 ${selectedStationId ? 'w-[calc(100vw-320px)]' : 'w-screen'
-        }`}>
+      {/* Mobile-first full-screen map container */}
+      <div className={`relative h-screen overflow-hidden bg-gray-100 transition-all duration-300 ${
+        selectedStationId ? 'lg:w-[calc(100vw-320px)]' : 'w-screen'
+      }`}>
         {/* Main Map */}
         <Map
           key={selectedStationId ? 'with-sidebar' : 'without-sidebar'}
           initialLat={mapCenter.lat}
           initialLng={mapCenter.lng}
-          routeData={currentRoute?.route}
+          routeData={currentRoute}
           stations={(() => {
             // Handle route charging stations first
             if (currentRoute?.chargingStations && currentRoute.chargingStations.length > 0) {
@@ -362,18 +398,22 @@ function MapPageContent() {
         {/* Navigation Instruction Overlay */}
         <NavigationInstructionOverlay route={currentRoute?.route} />
 
-        {/* Top Navigation Bar */}
+        {/* Top Navigation Bar - Mobile optimized */}
         <div className="absolute top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-                <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium hidden sm:inline">Back to Dashboard</span>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link href="/dashboard" className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="font-medium text-sm sm:text-base hidden xs:inline">Back</span>
+                <span className="font-medium hidden sm:inline">to Dashboard</span>
               </Link>
             </div>
-            <div className="flex items-center gap-2">
-              <Route className="h-5 w-5 text-blue-600" />
-              <h1 className="text-lg font-semibold text-gray-900 hidden sm:inline">Route Planner</h1>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Route className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              <h1 className="text-base sm:text-lg font-semibold text-gray-900">
+                <span className="hidden sm:inline">Route Planner</span>
+                <span className="sm:hidden">Routes</span>
+              </h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -381,8 +421,12 @@ function MapPageContent() {
                 variant="outline"
                 size="sm"
                 title={showPanels ? "Hide panels" : "Show panels"}
+                className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
               >
-                <Menu className="h-4 w-4" />
+                <Menu className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-2">
+                  {showPanels ? 'Hide' : 'Show'}
+                </span>
               </Button>
             </div>
           </div>
@@ -390,24 +434,24 @@ function MapPageContent() {
 
 
 
-        {/* Left Control Panel */}
+        {/* Left Control Panel - Mobile responsive */}
         {showPanels && (
-          <div className="absolute top-20 left-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] overflow-y-auto space-y-4">
-            {/* Route Planning Section */}
+          <div className="absolute top-16 sm:top-20 left-2 sm:left-4 z-10 w-[calc(100vw-1rem)] sm:w-80 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 sm:space-y-4">
+            {/* Route Planning Section - Mobile optimized */}
             <Card className="shadow-lg bg-blue-50 border-blue-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm text-blue-800">
+              <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-blue-800">
                   <Route className="h-4 w-4 text-blue-600" />
                   Route Planning
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-3">
-                {/* Origin Input */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-blue-700">Starting Point</label>
+              <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 space-y-3">
+                {/* Origin Input - Mobile optimized */}
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-blue-700">Starting Point</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full z-10"></div>
-                    <div className="pl-8">
+                    <div className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full z-10"></div>
+                    <div className="pl-6 sm:pl-8">
                       <AddressAutocomplete
                         onSelectAddress={handleOriginSelect}
                         placeholder="Choose starting point"
@@ -416,12 +460,12 @@ function MapPageContent() {
                   </div>
                 </div>
 
-                {/* Destination Input */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-blue-700">Destination</label>
+                {/* Destination Input - Mobile optimized */}
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-blue-700">Destination</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full z-10"></div>
-                    <div className="pl-8">
+                    <div className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full z-10"></div>
+                    <div className="pl-6 sm:pl-8">
                       <AddressAutocomplete
                         onSelectAddress={handleDestinationSelect}
                         placeholder="Choose destination"
@@ -430,42 +474,97 @@ function MapPageContent() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-2">
+                {/* Action Buttons - Mobile responsive */}
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
                   <Button
                     onClick={handleCalculateRoute}
                     disabled={!origin || !destination || !selectedVehicleId || calculateRoute.isPending}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 flex-1"
+                    className="bg-blue-600 hover:bg-blue-700 flex-1 h-9 text-sm"
                   >
                     {calculateRoute.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
-                      'Calculate Route'
+                      <Route className="h-4 w-4 mr-2" />
                     )}
+                    <span className="hidden sm:inline">Calculate Route</span>
+                    <span className="sm:hidden">Calculate</span>
                   </Button>
 
-                  {poiMarkers.length > 0 && (
+                  <div className="flex gap-2">
+                    {poiMarkers.length > 0 && (
+                      <Button
+                        onClick={clearMarkers}
+                        variant="outline"
+                        size="sm"
+                        title="Clear all"
+                        className="h-9 px-3"
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Clear</span>
+                      </Button>
+                    )}
+                    
+                    {/* Test Route Button - Hidden on mobile for space */}
                     <Button
-                      onClick={clearMarkers}
+                      onClick={() => {
+                        console.log('Setting test route');
+                        const testRoute = {
+                          success: true,
+                          route: {
+                            coordinates: [
+                              [10.0, 36.8], // Tunis area coordinates
+                              [10.1, 36.85],
+                              [10.2, 36.9],
+                              [10.3, 36.95]
+                            ]
+                          },
+                          chargingStations: [
+                            {
+                              id: 'test-station-1',
+                              name: 'Test Station 1',
+                              latitude: 36.85,
+                              longitude: 10.1,
+                              isActive: true,
+                              chargingTime: 30,
+                              cost: 15.50,
+                              batteryLevelAfter: 80,
+                              connectorType: 'Type 2'
+                            }
+                          ],
+                          analysis: {
+                            totalDistance: 50,
+                            totalTime: 3600,
+                            estimatedCost: 15.50,
+                            energyConsumption: 12,
+                            chargingTime: 1800,
+                            batteryLevelAtDestination: 80
+                          }
+                        };
+                        setCurrentRoute(testRoute);
+                        setRouteDetails(testRoute);
+                      }}
                       variant="outline"
                       size="sm"
-                      title="Clear all"
+                      className="text-xs h-9 hidden sm:flex"
                     >
-                      <X className="h-4 w-4" />
+                      Test
                     </Button>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Vehicle Selection */}
+            {/* Vehicle Selection - Mobile optimized */}
             <Card className="shadow-lg">
-              <CardContent className="p-2 sm:p-4">
-                <div className="space-y-2 sm:space-y-3">
-                  <label className="text-xs sm:text-sm font-medium">Vehicle</label>
+              <CardContent className="p-3 sm:p-4">
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                    Vehicle
+                  </label>
                   <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                    <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="Select vehicle" />
                     </SelectTrigger>
                     <SelectContent>
@@ -477,7 +576,9 @@ function MapPageContent() {
                       ) : (
                         vehicles?.map((vehicle: VehicleResponseDto) => (
                           <SelectItem key={vehicle.id} value={vehicle.id}>
-                            {vehicle.nickname || `${vehicle.make} ${vehicle.model}`}
+                            <span className="truncate">
+                              {vehicle.nickname || `${vehicle.make} ${vehicle.model}`}
+                            </span>
                           </SelectItem>
                         ))
                       )}
@@ -487,58 +588,74 @@ function MapPageContent() {
               </CardContent>
             </Card>
 
-            {/* Click Mode Controls */}
+            {/* Click Mode Controls - Mobile optimized */}
             <Card className="shadow-lg">
-              <CardContent className="p-2 sm:p-4">
-                <div className="space-y-2 sm:space-y-3">
-                  <label className="text-xs sm:text-sm font-medium">Quick Set</label>
+              <CardContent className="p-3 sm:p-4">
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                    Quick Set
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant={clickMode === 'origin' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setClickMode(clickMode === 'origin' ? 'none' : 'origin')}
-                      className="text-xs h-8"
+                      className="text-xs h-8 px-2"
                     >
-                      {clickMode === 'origin' ? 'Cancel' : 'Set Origin'}
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                      {clickMode === 'origin' ? 'Cancel' : 'Start'}
                     </Button>
                     <Button
                       type="button"
                       variant={clickMode === 'destination' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setClickMode(clickMode === 'destination' ? 'none' : 'destination')}
-                      className="text-xs h-8"
+                      className="text-xs h-8 px-2"
                     >
-                      {clickMode === 'destination' ? 'Cancel' : 'Set Dest'}
+                      <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                      {clickMode === 'destination' ? 'Cancel' : 'End'}
                     </Button>
                   </div>
                   {clickMode !== 'none' && (
-                    <p className="text-xs text-muted-foreground">
-                      Click map to set {clickMode}
+                    <p className="text-xs text-muted-foreground text-center">
+                      Tap map to set {clickMode === 'origin' ? 'starting point' : 'destination'}
                     </p>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Current Route Info */}
+            {/* Current Route Info - Mobile optimized */}
             {(origin || destination) && (
               <Card className="shadow-lg">
-                <CardContent className="p-2 sm:p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium">Current Route</label>
+                    <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
+                      <Route className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                      Current Route
+                    </label>
                     {origin && typeof origin === 'object' && (
-                      <div className="flex items-center gap-2 text-xs sm:text-sm">
-                        <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
-                        <span className="text-muted-foreground">From:</span>
-                        <span className="truncate">{poiMarkers.find(m => m.type === 'origin')?.name || `${origin.lat}, ${origin.lng}`}</span>
+                      <div className="flex items-start gap-2 text-xs sm:text-sm">
+                        <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-1"></div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-muted-foreground text-xs">From:</span>
+                          <div className="truncate font-medium">
+                            {poiMarkers.find(m => m.type === 'origin')?.name || `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`}
+                          </div>
+                        </div>
                       </div>
                     )}
                     {destination && typeof destination === 'object' && (
-                      <div className="flex items-center gap-2 text-xs sm:text-sm">
-                        <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
-                        <span className="text-muted-foreground">To:</span>
-                        <span className="truncate">{poiMarkers.find(m => m.type === 'destination')?.name || `${destination.lat}, ${destination.lng}`}</span>
+                      <div className="flex items-start gap-2 text-xs sm:text-sm">
+                        <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-1"></div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-muted-foreground text-xs">To:</span>
+                          <div className="truncate font-medium">
+                            {poiMarkers.find(m => m.type === 'destination')?.name || `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -548,70 +665,87 @@ function MapPageContent() {
           </div>
         )}
 
-        {/* Mobile Bottom Sheet for Controls */}
+        {/* Mobile Bottom Sheet for Quick Actions */}
         {showPanels && (
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg max-h-[40vh] overflow-y-auto">
-            <div className="p-4 space-y-4">
-              {/* Vehicle Selection - Mobile */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Vehicle</label>
-                <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Select vehicle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vehiclesLoading ? (
-                      <SelectItem value="loading" disabled>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading...
-                      </SelectItem>
-                    ) : (
-                      vehicles?.map((vehicle: VehicleResponseDto) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.nickname || `${vehicle.make} ${vehicle.model}`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Quick Set Controls - Mobile */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Quick Set</label>
-                <div className="grid grid-cols-2 gap-2">
+          <div className="md:hidden absolute bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t shadow-lg">
+            <div className="p-3 space-y-3">
+              {/* Quick Route Setup */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 grid grid-cols-2 gap-2">
                   <Button
                     type="button"
                     variant={clickMode === 'origin' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setClickMode(clickMode === 'origin' ? 'none' : 'origin')}
-                    className="text-xs"
+                    className="text-xs h-8"
                   >
-                    {clickMode === 'origin' ? 'Cancel' : 'Set Origin'}
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                    {clickMode === 'origin' ? 'Cancel' : 'Start'}
                   </Button>
                   <Button
                     type="button"
                     variant={clickMode === 'destination' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setClickMode(clickMode === 'destination' ? 'none' : 'destination')}
-                    className="text-xs"
+                    className="text-xs h-8"
                   >
-                    {clickMode === 'destination' ? 'Cancel' : 'Set Dest'}
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                    {clickMode === 'destination' ? 'Cancel' : 'End'}
                   </Button>
                 </div>
-                {clickMode !== 'none' && (
-                  <p className="text-xs text-muted-foreground">
-                    Click map to set {clickMode}
-                  </p>
-                )}
+                
+                {/* Calculate Route Button */}
+                <Button
+                  onClick={handleCalculateRoute}
+                  disabled={!origin || !destination || !selectedVehicleId || calculateRoute.isPending}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 h-8 px-4"
+                >
+                  {calculateRoute.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Route className="h-3 w-3" />
+                  )}
+                </Button>
               </div>
+
+              {/* Status indicator */}
+              {clickMode !== 'none' && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">
+                    Tap map to set {clickMode === 'origin' ? 'starting point' : 'destination'}
+                  </p>
+                </div>
+              )}
+
+              {/* Current route summary */}
+              {(origin || destination) && (
+                <div className="text-xs text-center space-y-1">
+                  {origin && typeof origin === 'object' && (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="truncate max-w-[200px]">
+                        {poiMarkers.find(m => m.type === 'origin')?.name || 'Start set'}
+                      </span>
+                    </div>
+                  )}
+                  {destination && typeof destination === 'object' && (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="truncate max-w-[200px]">
+                        {poiMarkers.find(m => m.type === 'destination')?.name || 'End set'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-)}
+        )}
 
-        {/* Station Details Sidebar */}
+        {/* Station Details Sidebar - Mobile responsive */}
         {selectedStationId && (
-          <div className="fixed top-16 right-0 z-30 w-80 h-[calc(100vh-4rem)] bg-white border-l shadow-xl">
+          <div className="fixed top-12 sm:top-16 right-0 z-30 w-full sm:w-80 h-[calc(100vh-3rem)] sm:h-[calc(100vh-4rem)] bg-white border-l shadow-xl">
             <StationDetailsSidebar
               stationId={selectedStationId}
               onClose={() => setSelectedStationId(null)}
@@ -619,21 +753,21 @@ function MapPageContent() {
           </div>
         )}
 
-        {/* Right Panel - Route Statistics and Navigation */}
+        {/* Right Panel - Route Statistics and Navigation - Mobile responsive */}
         {currentRoute && !selectedStationId && showPanels && (
-          <div className="absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
+          <div className="hidden lg:block absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
             {/* Navigation Panel */}
             <NavigationPanel
-              route={currentRoute.route}
+              route={currentRoute?.route}
               isNavigating={navigation.isNavigating}
-              onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
+              onStartNavigation={() => navigation.startNavigation(currentRoute?.route)}
               onStopNavigation={navigation.stopNavigation}
               onPauseNavigation={navigation.pauseNavigation}
               onResumeNavigation={navigation.resumeNavigation}
               currentStepIndex={navigation.currentStepIndex}
               onStepChange={navigation.setCurrentStep}
             />
-            
+
             <RouteStatisticsPanel
               distance={routeStats.distance}
               duration={routeStats.duration}
@@ -657,217 +791,200 @@ function MapPageContent() {
                     <span className="text-muted-foreground">Final Battery:</span>
                     <div className="font-medium">{routeStats.batteryLevel}</div>
                   </div>
-                  {currentRoute.analysis.initialBatteryPercentage && (
-                    <div>
-                      <span className="text-muted-foreground">Start Battery:</span>
-                      <div className="font-medium">{currentRoute.analysis.initialBatteryPercentage}%</div>
-                    </div>
-                  )}
-                  {currentRoute.analysis.batteryCapacity && (
-                    <div>
-                      <span className="text-muted-foreground">Battery Capacity:</span>
-                      <div className="font-medium">{currentRoute.analysis.batteryCapacity} kWh</div>
-                    </div>
-                  )}
                 </div>
-
-                {currentRoute.metadata.vehicleEfficiency && (
-                  <div className="text-xs">
-                    <span className="text-muted-foreground">Efficiency:</span>
-                    <span className="font-medium ml-1">{currentRoute.metadata.vehicleEfficiency} kWh/km</span>
-                  </div>
-                )}
-
-                {currentRoute.metadata.weather && (
-                  <div className="border-t pt-2">
-                    <div className="text-xs font-medium mb-1">Weather Impact</div>
-                    <div className="text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Conditions:</span>
-                        <span>{currentRoute.metadata.weather.conditions}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Temperature:</span>
-                        <span>{currentRoute.metadata.weather.temperature}°C</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Range Impact:</span>
-                        <span className={currentRoute.metadata.weather.rangeImpact > 0 ? 'text-red-600' : 'text-green-600'}>
-                          {currentRoute.metadata.weather.rangeImpact > 0 ? '-' : '+'}{Math.abs(currentRoute.metadata.weather.rangeImpact)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
+          </div>
+        )}
 
-            {/* Cost Breakdown */}
-            {currentRoute.analysis.costBreakdown && currentRoute.analysis.costBreakdown.length > 0 && (
-              <Card className="shadow-lg">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Charging Costs</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    {currentRoute.analysis.costBreakdown.map((station, index) => (
-                      <div key={`${station.stationId}-${index}`} className="border rounded p-2">
-                        <div className="font-medium text-xs">{station.stationName}</div>
-                        <div className="text-xs text-muted-foreground">{station.connectorType} • {station.connectorPower}kW</div>
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs">{station.energyCharged} kWh</span>
-                          <span className="text-xs font-medium">€{station.cost}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {Math.round(station.chargingTime / 60)} min • €{station.pricePerKwh}/kWh
-                        </div>
-                      </div>
-                    ))}
+        {/* Mobile Route Statistics Overlay */}
+        {currentRoute && !selectedStationId && showPanels && (
+          <div className="lg:hidden absolute top-16 left-2 right-2 z-10 max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <Card className="shadow-lg bg-white/95 backdrop-blur-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Route className="h-4 w-4 text-blue-600" />
+                    Route Summary
+                  </h3>
+                  <Button
+                    onClick={() => setShowPanels(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="font-semibold text-blue-900">{routeStats.distance}</div>
+                    <div className="text-blue-600">Distance</div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="font-semibold text-green-900">{routeStats.duration}</div>
+                    <div className="text-green-600">Duration</div>
+                  </div>
+                  <div className="text-center p-2 bg-yellow-50 rounded">
+                    <div className="font-semibold text-yellow-900">{routeStats.estimatedCost}</div>
+                    <div className="text-yellow-600">Cost</div>
+                  </div>
+                  <div className="text-center p-2 bg-purple-50 rounded">
+                    <div className="font-semibold text-purple-900">{currentRoute?.chargingStations?.length || 0}</div>
+                    <div className="text-purple-600">Stops</div>
+                  </div>
+                </div>
+
+                {/* Navigation Controls for Mobile */}
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigation.startNavigation(currentRoute?.route)}
+                      disabled={navigation.isNavigating}
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
+                    >
+                      {navigation.isNavigating ? (
+                        <>
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Navigating
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Start Navigation
+                        </>
+                      )}
+                    </Button>
+                    
+                    {navigation.isNavigating && (
+                      <Button
+                        onClick={navigation.stopNavigation}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
-        {/* Mobile Route Statistics - Bottom Sheet */}
-        {currentRoute && !selectedStationId && (
-          <div className="xl:hidden absolute bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg max-h-[40vh] overflow-y-auto">
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Route Statistics</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentRoute(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Mobile Route Statistics Overlay */}
+        {currentRoute && !selectedStationId && showPanels && (
+          <div className="lg:hidden absolute top-16 left-2 right-2 z-10 max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <Card className="shadow-lg bg-white/95 backdrop-blur-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Route className="h-4 w-4 text-blue-600" />
+                    Route Summary
+                  </h3>
+                  <Button
+                    onClick={() => setShowPanels(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="font-semibold text-blue-900">{routeStats.distance}</div>
+                    <div className="text-blue-600">Distance</div>
+                  </div>
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="font-semibold text-green-900">{routeStats.duration}</div>
+                    <div className="text-green-600">Duration</div>
+                  </div>
+                  <div className="text-center p-2 bg-yellow-50 rounded">
+                    <div className="font-semibold text-yellow-900">{routeStats.estimatedCost}</div>
+                    <div className="text-yellow-600">Cost</div>
+                  </div>
+                  <div className="text-center p-2 bg-purple-50 rounded">
+                    <div className="font-semibold text-purple-900">{currentRoute?.chargingStations?.length || 0}</div>
+                    <div className="text-purple-600">Stops</div>
+                  </div>
+                </div>
 
-              {/* Compact Route Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-lg font-bold text-blue-600">{routeStats.distance}</div>
-                  <div className="text-xs text-muted-foreground">Distance</div>
+                {/* Navigation Controls for Mobile */}
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigation.startNavigation(currentRoute?.route)}
+                      disabled={navigation.isNavigating}
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
+                    >
+                      {navigation.isNavigating ? (
+                        <>
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Navigating
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Start Navigation
+                        </>
+                      )}
+                    </Button>
+                    
+                    {navigation.isNavigating && (
+                      <Button
+                        onClick={navigation.stopNavigation}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="text-lg font-bold text-green-600">{routeStats.duration}</div>
-                  <div className="text-xs text-muted-foreground">Duration</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-orange-600">{routeStats.energyConsumption}</div>
-                  <div className="text-xs text-muted-foreground">Energy</div>
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-purple-600">{routeStats.estimatedCost}</div>
-                  <div className="text-xs text-muted-foreground">Cost</div>
-                </div>
-              </div>
-
-              {/* Additional Details - Collapsible */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Charging Time:</span>
-                  <div className="font-medium">{routeStats.chargingTime}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Final Battery:</span>
-                  <div className="font-medium">{routeStats.batteryLevel}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Charging Stops:</span>
-                  <div className="font-medium">{currentRoute?.chargingStations?.length || 0}</div>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
-        {/* Bottom Panel - Charging Stations */}
-        {/* {((currentRoute?.chargingStations && currentRoute.chargingStations.length > 0) ||
-            (nearbyStations && nearbyStations.length > 0)) && (
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <Card className="shadow-lg">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Zap className="h-4 w-4" />
-                      {currentRoute?.chargingStations && currentRoute.chargingStations.length > 0
-                        ? `Route Charging Stops (${currentRoute.chargingStations.length})`
-                        : `Nearby Stations (${nearbyStations?.length || 0})`
-                      }
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                      {(() => {
-                        const stationsToShow = currentRoute?.chargingStations && currentRoute.chargingStations.length > 0
-                          ? currentRoute.chargingStations
-                          : nearbyStations || [];
+        {/* Station Details Sidebar - Mobile responsive */}
+        {selectedStationId && (
+          <div className="fixed top-12 sm:top-16 right-0 z-30 w-full sm:w-80 h-[calc(100vh-3rem)] sm:h-[calc(100vh-4rem)] bg-white border-l shadow-xl">
+            <StationDetailsSidebar
+              stationId={selectedStationId}
+              onClose={() => setSelectedStationId(null)}
+            />
+          </div>
+        )}
 
-                        return stationsToShow.slice(0, 5).map((station) => (
-                          <div key={station.id} className="flex-shrink-0 p-3 border rounded-lg bg-white min-w-[200px]">
-                            <div className="font-medium text-sm">{station.name}</div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {station.address || (station.latitude && station.longitude
-                                ? `${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}`
-                                : 'Location unavailable')}
-                            </div>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className={`text-xs px-2 py-1 rounded ${station.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                {station.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {station.connectors?.length || 0} ports
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {station.type || 'public'}
-                              </span>
-                            </div>
-                            {station.rate && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                ⭐ {station.rate.toFixed(1)}
-                              </div>
-                            )}
-                            {station.openingTime && station.closingTime && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                🕒 {station.openingTime} - {station.closingTime}
-                              </div>
-                            )}
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )} */}
+        {/* Right Panel - Route Statistics and Navigation - Mobile responsive */}
+        {currentRoute && !selectedStationId && showPanels && (
+          <div className="hidden lg:block absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
+            {/* Navigation Panel */}
+            <NavigationPanel
+              route={currentRoute?.route}
+              isNavigating={navigation.isNavigating}
+              onStartNavigation={() => navigation.startNavigation(currentRoute?.route)}
+              onStopNavigation={navigation.stopNavigation}
+              onPauseNavigation={navigation.pauseNavigation}
+              onResumeNavigation={navigation.resumeNavigation}
+              currentStepIndex={navigation.currentStepIndex}
+              onStepChange={navigation.setCurrentStep}
+            />
 
-        {/* Mobile Navigation and Route Statistics - Bottom Sheet */}
-        {currentRoute && showPanels && (
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-20 bg-white border-t shadow-lg max-h-[50vh] overflow-y-auto">
-            <div className="p-4 space-y-4">
-              {/* Navigation Panel - Mobile */}
-              <NavigationPanel
-                route={currentRoute.route}
-                isNavigating={navigation.isNavigating}
-                onStartNavigation={() => navigation.startNavigation(currentRoute.route)}
-                onStopNavigation={navigation.stopNavigation}
-                onPauseNavigation={navigation.pauseNavigation}
-                onResumeNavigation={navigation.resumeNavigation}
-                currentStepIndex={navigation.currentStepIndex}
-                onStepChange={navigation.setCurrentStep}
-              />
-              
-              <RouteStatisticsPanel
-                distance={routeStats.distance}
-                duration={routeStats.duration}
-                energyConsumption={routeStats.energyConsumption}
-                estimatedCost={routeStats.estimatedCost}
-                chargingStops={currentRoute?.chargingStations?.length || 0}
-              />
-            </div>
+            <RouteStatisticsPanel
+              distance={routeStats.distance}
+              duration={routeStats.duration}
+              energyConsumption={routeStats.energyConsumption}
+              estimatedCost={routeStats.estimatedCost}
+              chargingStops={currentRoute?.chargingStations?.length || 0}
+            />
           </div>
         )}
       </div>

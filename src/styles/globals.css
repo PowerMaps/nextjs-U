@@ -74,14 +74,50 @@
     @apply bg-background text-foreground;
   }
 }
+.min-width{
+  height: 76vh;
+  width: 83vw;}
 
 /* Map styles */
 .map-container {
   @apply rounded-lg;
+  /* Better touch handling for mobile */
+  touch-action: pan-x pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .gm-style-cc {
   @apply hidden;
+}
+
+/* Mobile-specific map improvements */
+@media (max-width: 768px) {
+  .map-container {
+    @apply rounded-none;
+  }
+  
+  /* Hide Google Maps controls on mobile for cleaner UI */
+  .gm-style .gm-style-cc {
+    display: none !important;
+  }
+  
+  .gm-style .gmnoprint {
+    display: none !important;
+  }
+  
+  .gm-style .gm-bundled-control {
+    display: none !important;
+  }
+  
+  /* Keep only zoom controls visible */
+  .gm-style .gm-bundled-control.gm-bundled-control-on-bottom {
+    display: block !important;
+  }
 }
 
 /* Custom scrollbar */

@@ -11,7 +11,20 @@ interface NavigationButtonProps {
 }
 
 export function NavigationButton({ route, className }: NavigationButtonProps) {
-  const { isNavigating, startNavigation, stopNavigation } = useNavigation();
+  // Make navigation optional - only use if NavigationProvider is available
+  let isNavigating = false;
+  let startNavigation = (route?: any) => {};
+  let stopNavigation = () => {};
+  
+  try {
+    const navigation = useNavigation();
+    isNavigating = navigation.isNavigating;
+    startNavigation = navigation.startNavigation;
+    stopNavigation = navigation.stopNavigation;
+  } catch (error) {
+    // NavigationProvider not available, use default values
+    console.log('NavigationProvider not available in NavigationButton, navigation features disabled');
+  }
 
   const handleClick = () => {
     if (isNavigating) {

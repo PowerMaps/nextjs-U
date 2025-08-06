@@ -41,7 +41,21 @@ export function MapControls({
   route
 }: MapControlsProps) {
   const { theme, setTheme, showTraffic, setShowTraffic, showTransit, setShowTransit, mapType, setMapType } = useMapContext();
-  const { isNavigating, startNavigation, stopNavigation } = useNavigation();
+  
+  // Make navigation optional - only use if NavigationProvider is available
+  let isNavigating = false;
+  let startNavigation = (route?: any) => {};
+  let stopNavigation = () => {};
+  
+  try {
+    const navigation = useNavigation();
+    isNavigating = navigation.isNavigating;
+    startNavigation = navigation.startNavigation;
+    stopNavigation = navigation.stopNavigation;
+  } catch (error) {
+    // NavigationProvider not available, use default values
+    console.log('NavigationProvider not available in MapControls, navigation features disabled');
+  }
   const [trafficLayer, setTrafficLayer] = useState<google.maps.TrafficLayer | null>(null);
   const [transitLayer, setTransitLayer] = useState<google.maps.TransitLayer | null>(null);
   const handleMyLocation = () => {

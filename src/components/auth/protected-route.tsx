@@ -38,7 +38,7 @@ export function ProtectedRoute({
   useEffect(() => {
     if (!isLoading && requireAuth && !isAuthenticated) {
       // Store the attempted URL for redirect after login
-      const returnUrl = encodeURIComponent(pathname);
+      const returnUrl = encodeURIComponent(pathname || '/');
       router.push(`${redirectTo}?returnUrl=${returnUrl}`);
     }
   }, [isLoading, isAuthenticated, requireAuth, router, redirectTo, pathname]);

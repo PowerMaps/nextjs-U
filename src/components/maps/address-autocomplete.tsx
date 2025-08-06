@@ -299,10 +299,14 @@ export function AddressAutocomplete({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="pr-10"
+          className="pr-10 h-9 sm:h-10 text-sm"
           aria-expanded={showDropdown}
           aria-haspopup="listbox"
           role="combobox"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
         />
         <Search className="absolute right-3 h-4 w-4 text-muted-foreground" />
       </div>
@@ -316,7 +320,7 @@ export function AddressAutocomplete({
       {showDropdown && !error && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full bg-white shadow-lg rounded-md mt-1 max-h-80 overflow-y-auto border border-gray-200"
+          className="absolute z-10 w-full bg-white shadow-lg rounded-md mt-1 max-h-60 sm:max-h-80 overflow-y-auto border border-gray-200"
           role="listbox"
         >
           {isLoading && (
@@ -342,16 +346,16 @@ export function AddressAutocomplete({
                 return (
                   <div
                     key={suggestion.place_id}
-                    className={`p-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${focusedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-100'
-                      }`}
+                    className={`p-3 sm:p-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${focusedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-100'
+                      } active:bg-blue-100 touch-manipulation`}
                     role="option"
                     aria-selected={focusedIndex === itemIndex}
                     onClick={() => handleSelect(suggestion)}
                   >
                     <div className="flex items-center">
-                      <Search className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <div className="font-medium text-gray-500 truncate">{suggestion.structured_formatting.main_text} </div>
+                      <Search className="h-4 w-4 text-gray-400 mr-2 sm:mr-2 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-gray-900 truncate text-sm sm:text-sm">{suggestion.structured_formatting.main_text}</div>
                         <div className="text-xs text-gray-500 truncate">{suggestion.structured_formatting.secondary_text}</div>
                       </div>
                     </div>

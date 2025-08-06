@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ChargingStationMarkers } from './charging-station-markers';
 import { MapControls } from './map-controls';
+import { RouteVisualization } from './route-visualization';
 
 import { getMapStyle, MapTheme } from '@/lib/maps/map-themes';
 import { useMapContext } from '@/lib/contexts/map-context';
@@ -149,7 +150,19 @@ export function Map({
   clickMode = 'none'
 }: MapProps) {
   const { theme } = useMapContext();
-  const { currentLocation, isNavigating } = useNavigation();
+
+  // Make navigation optional - only use if NavigationProvider is available
+  let currentLocation = null;
+  let isNavigating = false;
+
+  try {
+    const navigation = useNavigation();
+    currentLocation = navigation.currentLocation;
+    isNavigating = navigation.isNavigating;
+  } catch (error) {
+    // NavigationProvider not available, use default values
+    console.log('NavigationProvider not available, navigation features disabled');
+  }
   const mapTheme = propTheme || theme;
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
@@ -170,17 +183,29 @@ export function Map({
         await loadGoogleMaps();
 
         if (mapContainer.current) {
+          // Detect if mobile for better map options
+          const isMobile = window.innerWidth < 768;
+          
           const mapOptions: google.maps.MapOptions = {
             center: { lat: 36.8008, lng: 10.1815 }, // Tunis center
-            zoom: 13,
+            zoom: isMobile ? 12 : 13, // Slightly zoomed out on mobile
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             disableDefaultUI: true,
             zoomControl: true,
-            scaleControl: true,
-            streetViewControl: true,
+            scaleControl: !isMobile, // Hide scale on mobile
+            streetViewControl: !isMobile, // Hide street view on mobile for cleaner UI
             rotateControl: false,
             clickableIcons: true,
-            gestureHandling: 'greedy',
+            gestureHandling: 'greedy', // Allow all gestures for better mobile experience
+            // Mobile-specific optimizations
+            ...(isMobile && {
+              zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM,
+                style: google.maps.ZoomControlStyle.SMALL
+              },
+              mapTypeControl: false,
+              fullscreenControl: false
+            }),
             styles: [
               {
                 featureType: 'poi.business',
@@ -259,7 +284,7 @@ export function Map({
     };
   }, [initialLng, initialLat, initialZoom, mapTheme]);
 
-  const routePolylineRef = useRef<google.maps.Polyline | null>(null);
+  // Route rendering is now handled by RouteVisualization component
 
   // Update map theme when theme prop changes
   // useEffect(() => {
@@ -270,84 +295,7 @@ export function Map({
   //   }
   // }, [mapTheme, isLoaded]);
 
-  useEffect(() => {
-    if (!map.current || !isLoaded) return;
-
-    // Remove existing route
-    if (routePolylineRef.current) {
-      routePolylineRef.current.setMap(null);
-      routePolylineRef.current = null;
-    }
-
-    console.log('Route data received:', routeData);
-
-    if (routeData) {
-      let route: DirectionsRoute | null = null;
-
-      // Handle both DirectionsResponse and DirectionsRoute formats
-      if ('routes' in routeData && routeData.routes.length > 0) {
-        route = routeData.routes[0]; // Use first route
-        console.log('Using first route from routes array:', route);
-      } else if ('overview_polyline' in routeData) {
-        route = routeData as DirectionsRoute;
-        console.log('Using route data directly:', route);
-      } else {
-        // Handle case where routeData might be GeoJSON or other format
-        console.log('Route data format not recognized, attempting GeoJSON fallback');
-        if (routeData && typeof routeData === 'object' && 'geometry' in routeData) {
-          const geoJsonRoute = routeData as any;
-          if (geoJsonRoute.geometry && geoJsonRoute.geometry.coordinates) {
-            console.log('Rendering GeoJSON route');
-            const path = geoJsonRoute.geometry.coordinates.map(([lng, lat]: [number, number]) => ({
-              lat,
-              lng
-            }));
-
-            routePolylineRef.current = new google.maps.Polyline({
-              path,
-              geodesic: true,
-              strokeColor: '#4285F4',
-              strokeOpacity: 1.0,
-              strokeWeight: 4,
-            });
-
-            routePolylineRef.current.setMap(map.current);
-            return;
-          }
-        }
-      }
-
-      if (route && route.overview_polyline && route.overview_polyline.points) {
-        console.log('Decoding polyline points:', route.overview_polyline.points);
-        // Decode the polyline points
-        const decodedPath = decodePolyline(route.overview_polyline.points);
-        console.log('Decoded path length:', decodedPath.length);
-
-        routePolylineRef.current = new google.maps.Polyline({
-          path: decodedPath,
-          geodesic: true,
-          strokeColor: '#4285F4',
-          strokeOpacity: 1.0,
-          strokeWeight: 4,
-        });
-
-        routePolylineRef.current.setMap(map.current);
-        console.log('Polyline added to map');
-
-        // Fit map to route bounds if available
-        if (route.bounds) {
-          const bounds = new google.maps.LatLngBounds(
-            new google.maps.LatLng(route.bounds.southwest.lat, route.bounds.southwest.lng),
-            new google.maps.LatLng(route.bounds.northeast.lat, route.bounds.northeast.lng)
-          );
-          map.current.fitBounds(bounds);
-          console.log('Map fitted to route bounds');
-        }
-      } else {
-        console.log('No valid route or polyline data found');
-      }
-    }
-  }, [routeData, isLoaded]);
+  // Route rendering is now handled by RouteVisualization component
 
   // Handle POI markers
   useEffect(() => {
@@ -548,28 +496,28 @@ export function Map({
   }, [currentLocation, isNavigating, isLoaded]);
 
   return (
-    <div className="relative w-full h-full min-h-[400px] sm:min-h-[500px]">
-      <div ref={mapContainer} className="map-container w-full h-full" />
+    <div className="relative w-full h-full min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
+      <div ref={mapContainer} className="map-container w-full h-full touch-pan-x touch-pan-y" />
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
           <div className="text-gray-600 text-sm sm:text-base">Loading map...</div>
         </div>
       )}
 
-      {/* Click mode indicator - Responsive */}
+      {/* Click mode indicator - Fully responsive */}
       {clickMode !== 'none' && (
-        <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg shadow-lg max-w-[90vw]">
+        <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-2 rounded-lg shadow-lg max-w-[90vw] sm:max-w-none">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span className="text-xs sm:text-sm font-medium">
-              Click map to set {clickMode === 'origin' ? 'start' : 'destination'}
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+              Tap map to set {clickMode === 'origin' ? 'start' : 'destination'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Map coordinates - Hidden on mobile */}
-      <div className="hidden sm:block absolute bottom-4 left-4 z-10 bg-white p-2 rounded shadow-md text-xs">
+      {/* Map coordinates - Hidden on mobile and small tablets */}
+      <div className="hidden lg:block absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur-sm p-2 rounded shadow-md text-xs">
         Lng: {lng} | Lat: {lat} | Zoom: {zoom}
       </div>
 
@@ -585,6 +533,13 @@ export function Map({
             stations={stations}
             onStationClick={onStationClick}
           />
+          {routeData && (
+            <RouteVisualization
+              map={map.current}
+              route={routeData}
+              onStationClick={onStationClick}
+            />
+          )}
         </>
       )}
       {isLoaded && showControls && <MapControls map={map.current} route={routeData} />}

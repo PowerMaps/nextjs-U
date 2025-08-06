@@ -42,8 +42,8 @@ export class AddressDataTransformer extends BaseTransformer<
     // Must have some form of coordinates
     const hasCoordinates = 
       data.coordinates ||
-      data.location?.coordinates ||
-      data.geometry?.coordinates;
+      (data.location as any)?.coordinates ||
+      (data.geometry as any)?.coordinates;
     
     return !!hasCoordinates;
   }

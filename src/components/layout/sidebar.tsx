@@ -43,7 +43,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
     },
     {
       title: "Route Planning",
-      href: "/dashboard/routes",
+      href: "/dashboard/map",
       icon: <Map className="h-5 w-5" />,
     },
     {

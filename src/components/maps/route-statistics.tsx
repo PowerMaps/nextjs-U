@@ -148,7 +148,7 @@ export function RouteStatistics({ route }: RouteStatisticsProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-2xl font-bold">{energyEfficiency.toFixed(2)} kWh/100km</p>
+              <p className="text-2xl font-bold">{energyEfficiency.toFixed(2)} kWh/1km</p>
               <p className="text-sm text-muted-foreground">Energy consumption rate</p>
             </div>
             
@@ -201,11 +201,11 @@ export function RouteStatistics({ route }: RouteStatisticsProps) {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {costBreakdown.map((entry, index) => (
+                    {costBreakdown.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`$${value.toFixed(2)}`, 'Cost']} />
+                  <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Cost']} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>

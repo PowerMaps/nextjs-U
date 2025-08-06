@@ -83,7 +83,7 @@ export class StationDataTransformer extends BaseTransformer<
 
   // Filter stations by status
   filterByStatus(stations: EnhancedStationData[], status: string[]): EnhancedStationData[] {
-    return stations.filter(station => status.includes(station.status));
+    return stations.filter(station => status.includes((station as any).status));
   }
 
   // Get stations within radius
@@ -99,7 +99,7 @@ export class StationDataTransformer extends BaseTransformer<
   // Group stations by status
   groupByStatus(stations: EnhancedStationData[]): Record<string, EnhancedStationData[]> {
     return stations.reduce((groups, station) => {
-      const status = station.status;
+      const status = (station as any).status;
       if (!groups[status]) {
         groups[status] = [];
       }
@@ -111,7 +111,7 @@ export class StationDataTransformer extends BaseTransformer<
   // Get station statistics
   getStationStatistics(stations: EnhancedStationData[]) {
     const total = stations.length;
-    const operational = stations.filter(s => s.status === 'OPERATIONAL').length;
+    const operational = stations.filter(s => (s as any).status === 'OPERATIONAL').length;
     const available = stations.filter(s => s.availableConnectors > 0).length;
     const totalConnectors = stations.reduce((sum, s) => sum + s.connectors.length, 0);
     const availableConnectors = stations.reduce((sum, s) => sum + s.availableConnectors, 0);
