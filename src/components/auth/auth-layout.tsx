@@ -72,7 +72,7 @@ export function AuthLayout({
         {showBackToHome && (
           <div className="mt-4 text-center">
             <a
-              href="/"
+              href="https://powermaps.tech/"
               className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
               ← Back to home
