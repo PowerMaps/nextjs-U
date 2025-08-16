@@ -1,28 +1,35 @@
 /**
- * Platform detection and conditional import system
- * Entry point for universal app platform utilities
+ * Universal platform adapter system
+ * 
+ * This module provides a unified interface for platform-specific functionality
+ * across web, iOS, and Android platforms using conditional imports and adapters.
  */
 
-export { platformDetector, UniversalPlatformDetector } from './detector';
-export { 
-  importPlatformModule, 
-  createPlatformAdapter, 
-  executePlatformSpecific,
-  getPlatformConfig 
-} from './conditional-imports';
-export type { 
-  Platform, 
-  PlatformDetector, 
-  PlatformCapabilities, 
-  PlatformAdapter,
-  PlatformConfig,
-  FeatureFlags 
-} from './types';
+// Core types and interfaces
+export * from './types';
 
-// Re-export commonly used utilities
-import { platformDetector as detector } from './detector';
+// Platform detection utilities
+export * from './detector';
 
-export const isNative = () => detector.isNative();
-export const isWeb = () => detector.isWeb();
-export const getPlatform = () => detector.getPlatform();
-export const getCapabilities = () => detector.getCapabilities();
+// Adapter registry
+export * from './registry';
+
+// Base adapter classes
+export * from './base-adapter';
+
+// Convenience re-exports for common use cases
+export {
+  getStorageAdapter,
+  getHttpClient,
+  getNotificationAdapter,
+  getGeolocationAdapter,
+  getCameraAdapter,
+  getDeviceAdapter,
+} from './registry';
+
+export {
+  isNative,
+  isWeb,
+  getPlatform,
+  getCapabilities,
+} from './detector';

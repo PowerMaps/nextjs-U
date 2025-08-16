@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const isCapacitorBuild = process.env.CAPACITOR_BUILD === 'true';
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
 
 const nextConfig = {
   reactStrictMode: true,
@@ -7,13 +9,19 @@ const nextConfig = {
     instrumentationHook: false,
   },
   images: {
-    domains: ['localhost', 'api.charge-tn.com', 'api.powermaps.com', 'api.powermaps.tech'],
+    domains: [
+      'localhost', 
+      'api.charge-tn.com', 
+      'api.powermaps.com', 
+      'api.powermaps.tech',
+      'staging-api.powermaps.tech'
+    ],
     unoptimized: isCapacitorBuild, // Disable image optimization for Capacitor builds
-    domains: ['localhost', 'api.powermaps.tech'], // Add your API domains here
   },
   env: {
-    API_URL: process.env.API_URL || 'http://localhost:4000',
+    API_URL: process.env.API_URL || 'http://localhost:10000',
     CAPACITOR_BUILD: process.env.CAPACITOR_BUILD || 'false',
+    BUILD_ENV: process.env.NODE_ENV || 'development',
   },
   // Enable static export for Capacitor builds
   ...(isCapacitorBuild && {
@@ -39,9 +47,35 @@ const nextConfig = {
           },
         },
       };
+      
+      // Add environment-specific optimizations
+      if (isProduction) {
+        config.optimization.minimize = true;
+      }
     }
+    
+    // Environment-specific webpack configurations
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
+    
     return config;
   },
+  
+  // Environment-specific configurations
+  ...(isDevelopment && {
+    // Development-specific settings
+    devIndicators: {
+      buildActivity: true,
+    },
+  }),
+  
+  ...(isProduction && {
+    // Production-specific settings
+    compress: true,
+    poweredByHeader: false,
+  }),
 }
 
 module.exports = nextConfig;

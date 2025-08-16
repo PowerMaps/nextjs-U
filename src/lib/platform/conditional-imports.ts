@@ -3,7 +3,11 @@
  */
 
 import { platformDetector } from './detector';
-import type { PlatformAdapter } from './types';
+// Platform adapter interface for conditional imports
+interface PlatformAdapter<T> {
+  web: () => Promise<T>;
+  native: () => Promise<T>;
+}
 
 /**
  * Dynamically import platform-specific implementation
