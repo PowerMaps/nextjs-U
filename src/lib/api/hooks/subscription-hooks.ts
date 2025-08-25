@@ -5,7 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Types for subscriptions
-interface SubscriptionPlanResponseDto {
+export interface SubscriptionPlanResponseDto {
   id: string;
   name: string;
   description: string;
@@ -18,7 +18,7 @@ interface SubscriptionPlanResponseDto {
   updatedAt: string;
 }
 
-interface SubscriptionResponseDto {
+export interface SubscriptionResponseDto {
   id: string;
   userId: string;
   planId: string;
@@ -31,13 +31,13 @@ interface SubscriptionResponseDto {
   updatedAt: string;
 }
 
-interface CreateSubscriptionDto {
+export interface CreateSubscriptionDto {
   planId: string;
   autoRenew?: boolean;
   paymentMethodId?: string;
 }
 
-interface UpdateSubscriptionDto {
+export interface UpdateSubscriptionDto {
   autoRenew?: boolean;
   paymentMethodId?: string;
 }
@@ -83,6 +83,29 @@ export function useSubscribe() {
     '/subscriptions',
     'POST',
     {
+      onMutate: async (newSubscription) => {
+        await queryClient.cancelQueries({ queryKey: ['subscription', 'current'] });
+
+        const previousSubscription = queryClient.getQueryData(['subscription', 'current']);
+
+        queryClient.setQueryData(['subscription', 'current'], (old: any) => {
+          return {
+            ...old,
+            ...newSubscription,
+            status: 'PENDING',
+          };
+        });
+
+        return { previousSubscription };
+      },
+      onError: (error, newSubscription, context) => {
+        queryClient.setQueryData(['subscription', 'current'], context?.previousSubscription);
+        toast({
+          title: 'Subscription failed',
+          description: error.message || 'An error occurred while processing your subscription.',
+          variant: 'destructive',
+        });
+      },
       onSuccess: (data) => {
         // Invalidate current subscription
         queryClient.invalidateQueries({ queryKey: ['subscription', 'current'] });
@@ -90,13 +113,6 @@ export function useSubscribe() {
         toast({
           title: 'Subscription successful',
           description: `You have successfully subscribed to the ${data.plan.name} plan.`,
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: 'Subscription failed',
-          description: error.message || 'An error occurred while processing your subscription.',
-          variant: 'destructive',
         });
       },
     }

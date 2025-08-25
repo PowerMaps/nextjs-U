@@ -47,6 +47,23 @@ export function useCreateBooking() {
     '/bookings',
     'POST',
     {
+      onMutate: async () => {
+        await queryClient.cancelQueries({ queryKey: ['bookings'] });
+
+        const previousBookings = queryClient.getQueryData(['bookings']);
+
+        return { previousBookings };
+      },
+      onError: (error, _newBooking, context) => {
+        if (context && 'previousBookings' in context) {
+          queryClient.setQueryData(['bookings'], context.previousBookings);
+        }
+        toast({
+          title: 'Booking failed',
+          description: error.message || 'Failed to create booking. Please try again.',
+          variant: 'destructive',
+        });
+      },
       onSuccess: (data) => {
         // Invalidate bookings cache
         queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -59,13 +76,6 @@ export function useCreateBooking() {
         toast({
           title: 'Booking created',
           description: `Your booking for ${data.connector.station.name} has been created successfully.`,
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: 'Booking failed',
-          description: error.message || 'Failed to create booking. Please try again.',
-          variant: 'destructive',
         });
       },
     }

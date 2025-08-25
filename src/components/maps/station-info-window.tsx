@@ -1,10 +1,24 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChargingStationResponseDto } from '@/lib/api/types';
 
 import { useCreateBooking, useConnectorPricing } from '@/lib/api/hooks/booking-hooks';
+import { useConnectorAvailability } from '@/lib/api/hooks/useConnectorAvailability';
+import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useWalletValidation } from '@/lib/api/hooks/wallet-hooks';
+import { useCurrentSubscription } from '@/lib/api/hooks/subscription-hooks';
+import { TopUpModal } from '@/components/wallet/TopUpModal';
+import { WalletPaymentComponent } from '@/components/wallet/WalletPaymentComponent';
+import { BookingConfirmationModal } from '@/components/bookings/BookingConfirmationModal';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { 
+  getConnectorStatusColor, 
+  getConnectorStatusDisplayName, 
+  isConnectorAvailable,
+  normalizeConnectorStatus 
+} from '@/lib/utils/connector-status';
 
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -29,45 +43,63 @@ interface StationInfoWindowProps {
   onClose?: () => void;
 }
 
+// Form validation interface
+interface FormErrors {
+  startTime?: string;
+  endTime?: string;
+  estimatedEnergy?: string;
+  general?: string;
+}
+
 export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) {
   const [selectedConnectorId, setSelectedConnectorId] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [estimatedEnergy, setEstimatedEnergy] = useState<number>(20);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState<any>(null);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
 
-  // Use connectors directly from station data - no need for separate API call
-  const { data: pricing } = useConnectorPricing(selectedConnectorId);
-  const createBooking = useCreateBooking();
+  const debouncedStartTime = useDebounce(startTime, 300);
+  const debouncedEndTime = useDebounce(endTime, 300);
+  const debouncedEstimatedEnergy = useDebounce(estimatedEnergy, 300);
 
-  const getConnectorStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'in_use':
-      case 'occupied':
-        return 'bg-red-100 text-red-800';
-      case 'reserved':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'offline':
-      case 'maintenance':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const { data: availability, isLoading: isAvailabilityLoading, error: availabilityError } = useConnectorAvailability(
+    selectedConnectorId,
+    debouncedStartTime,
+    debouncedEndTime,
+    {
+      enabled: !!(selectedConnectorId && debouncedStartTime && debouncedEndTime),
+      realTimeUpdates: true,
     }
-  };
+  );
+
+  const { data: pricing, isLoading: isPricingLoading } = useConnectorPricing(selectedConnectorId);
+  const createBooking = useCreateBooking();
+  const { 
+    balance, 
+    currency: walletCurrency, 
+    validateSufficientFunds, 
+    refreshBalance 
+  } = useWalletValidation();
+  const { data: subscription } = useCurrentSubscription();
+  const { toast } = useToast();
+
+
 
   const getConnectorStatusIcon = (status: string) => {
-    switch (status) {
-      case 'available':
+    const normalizedStatus = normalizeConnectorStatus(status);
+    
+    switch (normalizedStatus) {
+      case 'AVAILABLE':
         return <CheckCircle className="h-4 w-4" />;
-      case 'in_use':
-      case 'occupied':
+      case 'IN_USE':
         return <XCircle className="h-4 w-4" />;
-      case 'reserved':
+      case 'RESERVED':
         return <Clock className="h-4 w-4" />;
-      case 'offline':
-      case 'maintenance':
+      case 'OFFLINE':
         return <AlertCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
@@ -91,19 +123,29 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
       setSelectedConnectorId('');
       setStartTime('');
       setEndTime('');
+      setBookingError(null);
     } catch (error) {
+      setBookingError(error.message);
       console.error('Booking failed:', error);
     }
   };
 
   const calculateEstimatedCost = () => {
     if (!pricing || !estimatedEnergy) return null;
-    return (pricing.pricePerKwh * estimatedEnergy).toFixed(2);
+    const baseCost = pricing.pricePerKwh * estimatedEnergy;
+    if (subscription && subscription.plan.discount > 0) {
+      return (baseCost * (1 - subscription.plan.discount)).toFixed(2);
+    }
+    return baseCost.toFixed(2);
   };
 
-  const formatDateTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleString();
+  const calculateDiscount = () => {
+    if (!pricing || !estimatedEnergy || !subscription || !subscription.plan.discount) return null;
+    const baseCost = pricing.pricePerKwh * estimatedEnergy;
+    return (baseCost * subscription.plan.discount).toFixed(2);
   };
+
+
 
   // Set default start time to now + 1 hour, end time to now + 3 hours
   const getDefaultTimes = () => {
@@ -196,7 +238,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                       : 'hover:bg-gray-50'
                     }`}
                   onClick={() => {
-                    if (connector.status === 'AVAILABLE') {
+                    if (isConnectorAvailable(connector.status)) {
                       setSelectedConnectorId(connector.id);
                     }
                   }}
@@ -205,7 +247,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                     <div className="flex items-center gap-2">
                       <Badge className={getConnectorStatusColor(connector.status)}>
                         {getConnectorStatusIcon(connector.status)}
-                        <span className="ml-1">{connector.status}</span>
+                        <span className="ml-1">{getConnectorStatusDisplayName(connector.status)}</span>
                       </Badge>
                       <span className="font-medium">{connector.type}</span>
                       <span className="text-sm text-muted-foreground">
@@ -217,7 +259,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                         </span>
                       )}
                     </div>
-                    {connector.status === 'AVAILABLE' && (
+                    {isConnectorAvailable(connector.status) && subscription && (
                       <Button
                         size="sm"
                         variant={selectedConnectorId === connector.id ? "default" : "outline"}
@@ -293,29 +335,94 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
 
               {pricing && (
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="h-4 w-4" />
-                    <span>Price: {pricing.pricePerKwh} {pricing.currency}/kWh</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <DollarSign className="h-4 w-4" />
+                      <span>Price: {pricing.pricePerKwh} {pricing.currency}/kWh</span>
+                    </div>
+                    {wallet && (
+                      <div className="text-sm">
+                        Wallet: {wallet.balance} {wallet.currency}
+                      </div>
+                    )}
                   </div>
                   {calculateEstimatedCost() && (
                     <div className="text-sm font-medium mt-1">
                       Estimated Cost: {calculateEstimatedCost()} {pricing.currency}
+                      {subscription && subscription.plan.discount > 0 && (
+                        <span className="text-green-500 ml-2">(-{calculateDiscount()} {pricing.currency})</span>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
+              {wallet && pricing && calculateEstimatedCost() && wallet.balance < parseFloat(calculateEstimatedCost()) && (
+                <div className="flex items-center gap-2 text-sm text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Insufficient funds.</span>
+                  <TopUpModal />
+                </div>
+              )}
+
+              {isAvailabilityLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Checking availability...</span>
+                </div>
+              )}
+
+              {availability && !availability.isAvailable && (
+                <div className="flex items-center gap-2 text-sm text-red-500">
+                  <XCircle className="h-4 w-4" />
+                  <span>This time slot is not available.</span>
+                  {availability.alternativeSlots && availability.alternativeSlots.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium">Alternative slots:</p>
+                      <div className="flex gap-2 mt-1">
+                        {availability.alternativeSlots.map((slot) => (
+                          <Button
+                            key={slot.startTime}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setStartTime(slot.startTime);
+                              setEndTime(slot.endTime);
+                            }}
+                          >
+                            {new Date(slot.startTime).toLocaleTimeString()} - {new Date(slot.endTime).toLocaleTimeString()}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {availability && availability.isAvailable && (
+                <div className="flex items-center gap-2 text-sm text-green-500">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>This time slot is available.</span>
+                </div>
+              )}
+
               <div className="flex gap-2">
-                <Button
-                  onClick={handleBookingSubmit}
-                  disabled={createBooking.isPending || !startTime || !endTime}
-                  className="flex-1"
-                >
-                  {createBooking.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Confirm Booking
-                </Button>
+                {availability?.isAvailable && (
+                  <WalletPaymentComponent
+                    bookingId={createBooking.data?.id} // Assuming createBooking returns the booking
+                    amount={parseFloat(calculateEstimatedCost())}
+                    onPaymentSuccess={() => {
+                      setShowBookingForm(false);
+                      setSelectedConnectorId('');
+                      setConfirmedBooking(createBooking.data);
+                      setShowConfirmationModal(true);
+                      toast({
+                        title: 'Booking Successful!',
+                        description: `You saved ${calculateDiscount()} ${pricing?.currency} with your subscription.`,
+                      });
+                    }}
+                  />
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -326,8 +433,22 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                   Cancel
                 </Button>
               </div>
+              {bookingError && (
+                <div className="flex items-center gap-2 text-sm text-red-500">
+                  <XCircle className="h-4 w-4" />
+                  <span>{bookingError}</span>
+                  <Button variant="outline" size="sm" onClick={handleBookingSubmit}>Retry</Button>
+                </div>
+              )}
             </div>
           </>
+        )}
+        {confirmedBooking && (
+          <BookingConfirmationModal
+            isOpen={showConfirmationModal}
+            onClose={() => setShowConfirmationModal(false)}
+            booking={confirmedBooking}
+          />
         )}
       </div>
     </div>

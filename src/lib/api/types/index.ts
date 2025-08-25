@@ -224,11 +224,13 @@ export interface ChargingStationResponseDto {
   updatedAt: string;
 }
 
+export type ConnectorStatus = 'AVAILABLE' | 'IN_USE' | 'OFFLINE' | 'RESERVED';
+
 export interface ConnectorResponseDto {
   id: string;
   type: string;
   power: number;
-  status: 'AVAILABLE' | 'IN_USE' | 'OFFLINE' | 'RESERVED';
+  status: ConnectorStatus;
   station: ChargingStationResponseDto;
   pricePerKwh?: number;
 }
