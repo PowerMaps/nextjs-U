@@ -10,7 +10,6 @@ const CRITICAL_ENDPOINTS = [
   '/wallet/transfer',
   '/vehicles',
   '/vehicles/',
-  '/routing/saved-routes',
   '/notifications/preferences',
 ];
 

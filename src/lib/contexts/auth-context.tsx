@@ -46,7 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
   
   const router = useRouter();
-  const { accessToken, refreshToken, setTokens, clearTokens, preferences } = useAuthStore();
+  const { accessToken, refreshToken, setTokens, clearTokens, preference , resetPreferences } = useAuthStore();
 
   // Initialize authentication state on mount
   useEffect(() => {
@@ -140,22 +140,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Logout function
   const logout = (): void => {
     try {
+      
+      localStorage.removeItem('auth-store'); // Then clear storage
+      resetPreferences() // Reset preferences to default on logout
       // Call logout endpoint to invalidate tokens on server
-      apiClient.post('/auth/logout').catch(console.error);
+      // apiClient.post('/auth/logout').catch(console.error);
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
-      // Clear local state and tokens regardless of API call result
-      clearTokens();
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
         error: null,
       });
+      setTokens({
+        accessToken: '',
+        refreshToken: '',
+
+      });
+      // Clear local state and tokens regardless of API call result
+      clearTokens();
       
       // Redirect to login page
-      router.push('/auth/login');
+     setTimeout(() => {
+       router.push('/auth/login');
+     }, 200);
     }
   };
 

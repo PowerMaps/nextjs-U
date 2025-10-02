@@ -48,12 +48,12 @@ class ApiClient {
     const authStore = 'auth-store';
     const authData = typeof window !== 'undefined' ? localStorage.getItem(authStore) : null;
     const token = authData ? JSON.parse(authData)?.state?.accessToken : null;
-    
+
     this.client = axios.create({
       baseURL: process.env.API_URL || 'http://localhost:5500/api/v1',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       timeout: 10000,
     });
@@ -107,9 +107,10 @@ class ApiClient {
 
           try {
             // Try to refresh token from auth store
-            const authData = typeof window !== 'undefined' ? localStorage.getItem('auth-store') : null;
+            const authData =
+              typeof window !== 'undefined' ? localStorage.getItem('auth-store') : null;
             const refreshToken = authData ? JSON.parse(authData)?.state?.refreshToken : null;
-            
+
             if (!refreshToken) {
               throw new Error('No refresh token available');
             }
@@ -119,7 +120,7 @@ class ApiClient {
             });
 
             const { accessToken, refreshToken: newRefreshToken } = response.data;
-            
+
             // Update auth store with new tokens
             if (typeof window !== 'undefined' && authData) {
               const authState = JSON.parse(authData);

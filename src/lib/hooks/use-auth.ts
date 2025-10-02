@@ -63,11 +63,14 @@ export function useLogout() {
 
   const handleLogout = async () => {
     try {
+      console.log('loggign out')
       setIsLoggingOut(true);
       logout();
+      window.location.reload()
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+     
       setIsLoggingOut(false);
     }
   };

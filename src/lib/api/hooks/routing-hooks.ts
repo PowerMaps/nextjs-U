@@ -40,29 +40,29 @@ export function useCalculateRoute() {
 }
 
 // Hook to get a saved route by ID
-export function useSavedRoute(routeId: string) {
-  return useApiQuery<RouteResponseDto>(
-    ['route', routeId],
-    `/routing/saved-routes/${routeId}`,
-    {
-      enabled: !!routeId,
-      // Use stale data if offline
-      staleTime: Infinity,
-    }
-  );
-}
+// export function useSavedRoute(routeId: string) {
+//   return useApiQuery<RouteResponseDto>(
+//     ['route', routeId],
+//     `/routing/saved-routes/${routeId}`,
+//     {
+//       enabled: !!routeId,
+//       // Use stale data if offline
+//       staleTime: Infinity,
+//     }
+//   );
+// }
 
 // Hook to get all saved routes
-export function useSavedRoutes() {
-  return useApiQuery<RouteResponseDto[]>(
-    ['routes', 'saved'],
-    '/routing/saved-routes',
-    {
-      // Use stale data if offline
-      staleTime: Infinity,
-    }
-  );
-}
+// export function useSavedRoutes() {
+//   return useApiQuery<RouteResponseDto[]>(
+//     ['routes', 'saved'],
+//     '/routing/saved-routes',
+//     {
+//       // Use stale data if offline
+//       staleTime: Infinity,
+//     }
+//   );
+// }
 
 // Hook to save a route
 export function useSaveRoute() {

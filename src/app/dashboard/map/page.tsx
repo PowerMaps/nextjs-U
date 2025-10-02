@@ -507,7 +507,7 @@ function MapPageContent() {
                     )}
                     
                     {/* Test Route Button - Hidden on mobile for space */}
-                    <Button
+                    {/* <Button
                       onClick={() => {
                         console.log('Setting test route');
                         const testRoute = {
@@ -550,7 +550,7 @@ function MapPageContent() {
                       className="text-xs h-9 hidden sm:flex"
                     >
                       Test
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </CardContent>

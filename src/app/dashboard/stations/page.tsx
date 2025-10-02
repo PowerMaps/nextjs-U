@@ -33,7 +33,7 @@ export default function StationsPage() {
 
     // Get user stations only
     const { data: userStations = [], isLoading, error } = useUserStations();
-    
+
     // Mutations for edit and delete
     const updateStationMutation = useUpdateStation();
     const deleteStationMutation = useDeleteStation();
@@ -303,8 +303,8 @@ export default function StationsPage() {
 
                                         <div className="flex flex-col gap-2 ml-4">
                                             <div className="flex gap-2">
-                                                <Button 
-                                                    size="sm" 
+                                                <Button
+                                                    size="sm"
                                                     variant="outline"
                                                     onClick={() => handleEditStation(station)}
                                                     disabled={updateStationMutation.isPending}
@@ -312,8 +312,8 @@ export default function StationsPage() {
                                                     <Edit className="h-4 w-4 mr-2" />
                                                     Edit
                                                 </Button>
-                                                <Button 
-                                                    size="sm" 
+                                                <Button
+                                                    size="sm"
                                                     variant="outline"
                                                     onClick={() => handleDeleteStation(station.id)}
                                                     disabled={deleteStationMutation.isPending}
@@ -327,7 +327,7 @@ export default function StationsPage() {
                                                     Delete
                                                 </Button>
                                             </div>
-                                          
+
                                         </div>
                                     </div>
 
@@ -367,7 +367,7 @@ export default function StationsPage() {
 
             {/* Floating Action Button */}
             <div className="fixed bottom-6 right-6 z-50">
-                <Link href="/dashboard/map">
+                <Link href="/dashboard/stations/map">
                     <Button size="lg" className="rounded-full shadow-lg bg-blue-600 hover:bg-blue-700">
                         <MapIcon className="h-5 w-5 mr-2" />
                         Open Map

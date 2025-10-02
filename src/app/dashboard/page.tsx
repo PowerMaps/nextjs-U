@@ -4,7 +4,7 @@ import React from 'react';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { useVehicles } from '@/lib/api/hooks/vehicle-hooks';
 import { useWallet, useWalletTransactions } from '@/lib/api/hooks/wallet-hooks';
-import { useSavedRoutes } from '@/lib/api/hooks/routing-hooks';
+// import { useSavedRoutes } from '@/lib/api/hooks/routing-hooks';
 import { useChargingStations } from '@/lib/api/hooks/station-hooks';
 import { useNotifications } from '@/lib/api/hooks/notification-hooks';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,14 +29,14 @@ export default function DashboardPage() {
   const { data: vehicles, isLoading: vehiclesLoading } = useVehicles();
   const { data: wallet, isLoading: walletLoading } = useWallet();
   const { data: transactions } = useWalletTransactions({ limit: 5 });
-  const { data: savedRoutes } = useSavedRoutes();
+  // const { data: savedRoutes } = useSavedRoutes();
   const { data: stationsData } = useChargingStations({ limit: 10 });
   const { data: notifications } = useNotifications({ limit: 5 });
 
   // Calculate dashboard metrics
   const totalVehicles = vehicles?.length || 0;
   const walletBalance = wallet?.balance || 0;
-  const totalSavedRoutes = savedRoutes?.length || 0;
+  // const totalSavedRoutes = savedRoutes?.length || 0;
   const unreadNotifications = notifications?.items?.filter(n => !n.read).length || 0;
   const nearbyStations = stationsData?.items?.length || 0;
 
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               <Route className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalSavedRoutes}</div>
+              {/* <div className="text-2xl font-bold">{totalSavedRoutes}</div> */}
               <p className="text-xs text-muted-foreground">
                 Your favorite routes
               </p>

@@ -14,6 +14,7 @@ interface StationDetailsSidebarProps {
 
 export function StationDetailsSidebar({ stationId, onClose }: StationDetailsSidebarProps) {
   const { data: station, isLoading, error } = useChargingStation(stationId || '');
+console.log(stationId, station, isLoading, error);
 
   if (!stationId) {
     return null;

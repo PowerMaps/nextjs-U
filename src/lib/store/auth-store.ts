@@ -237,7 +237,10 @@ export const useAuthStore = create<AuthStoreState>()(
     set((state) => ({
       ui: defaultUIState,
     })),
-
+    clearPreferences: () =>
+    set((state) => ({
+      preferences: defaultPreferences,
+    })),
   resetPreferences: () =>
     set((state) => ({
       preferences: defaultPreferences,
@@ -257,6 +260,7 @@ export const useAuthStore = create<AuthStoreState>()(
 );
 // Selectors for common use cases
 export const useAuthPreferences = () => useAuthStore((state) => state.preferences);
+export const useResetPreferences = () => useAuthStore((state) => state.resetPreferences);
 export const useAuthUI = () => useAuthStore((state) => state.ui);
 export const useSessionState = () => useAuthStore((state) => ({
   lastActivity: state.lastActivity,

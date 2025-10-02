@@ -27,6 +27,7 @@ export default function UserDropdown() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("auth-store");
     }
     
     // Redirect to login page

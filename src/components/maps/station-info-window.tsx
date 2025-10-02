@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ChargingStationResponseDto } from '@/lib/api/types';
 
-import { useCreateBooking, useConnectorPricing } from '@/lib/api/hooks/booking-hooks';
+import { useCreateBooking, useConnectorPricing, useCheckConnectorAvailability } from '@/lib/api/hooks/booking-hooks';
 import { Button } from '@/components/ui/button';
 
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { CardTitle } from '../ui/card';
+import { useRouter } from 'next/navigation';
 
 interface StationInfoWindowProps {
   station: ChargingStationResponseDto;
@@ -35,12 +36,22 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
   const [endTime, setEndTime] = useState<string>('');
   const [estimatedEnergy, setEstimatedEnergy] = useState<number>(20);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const router = useRouter();
 
   // Use connectors directly from station data - no need for separate API call
   const { data: pricing } = useConnectorPricing(selectedConnectorId);
+  const { data: availability } = useCheckConnectorAvailability(
+    selectedConnectorId,
+    startTime,
+    endTime
+  );
   const createBooking = useCreateBooking();
 
   const getConnectorStatusColor = (status: string) => {
+    console.log(status);
+    
     switch (status) {
       case 'available':
         return 'bg-green-100 text-green-800';
@@ -74,6 +85,19 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
     }
   };
 
+  const handleProceedToConfirmation = () => {
+    if (!selectedConnectorId || !startTime || !endTime) {
+      return;
+    }
+
+    // Check availability
+    if (availability && !availability.available) {
+      return;
+    }
+
+    setShowConfirmation(true);
+  };
+
   const handleBookingSubmit = async () => {
     if (!selectedConnectorId || !startTime || !endTime) {
       return;
@@ -88,9 +112,13 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
       });
 
       setShowBookingForm(false);
+      setShowConfirmation(false);
       setSelectedConnectorId('');
       setStartTime('');
       setEndTime('');
+
+      // Navigate to bookings page after successful booking
+      router.push('/dashboard/bookings');
     } catch (error) {
       console.error('Booking failed:', error);
     }
@@ -196,15 +224,15 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                       : 'hover:bg-gray-50'
                     }`}
                   onClick={() => {
-                    if (connector.status === 'AVAILABLE') {
+                    if (connector.status?.toLocaleUpperCase() === 'AVAILABLE') {
                       setSelectedConnectorId(connector.id);
                     }
                   }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge className={getConnectorStatusColor(connector.status)}>
-                        {getConnectorStatusIcon(connector.status)}
+                      <Badge className={getConnectorStatusColor(connector.status?.toLocaleUpperCase())}>
+                        {getConnectorStatusIcon(connector.status?.toLocaleUpperCase())}
                         <span className="ml-1">{connector.status}</span>
                       </Badge>
                       <span className="font-medium">{connector.type}</span>
@@ -245,7 +273,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
         </div>
 
         {/* Booking Form */}
-        {showBookingForm && selectedConnectorId && (
+        {showBookingForm && selectedConnectorId && !showConfirmation && (
           <>
             <Separator />
             <div className="space-y-4">
@@ -277,6 +305,29 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                 </div>
               </div>
 
+              {/* Availability Check */}
+              {availability && startTime && endTime && (
+                <div className={`p-3 rounded-lg ${
+                  availability.available
+                    ? 'bg-green-50 border border-green-200'
+                    : 'bg-red-50 border border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2 text-sm">
+                    {availability.available ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-green-800 font-medium">Available for selected time slot</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-red-600" />
+                        <span className="text-red-800 font-medium">Not available - conflicting bookings</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="estimatedEnergy" className="text-sm">
                   Estimated Energy Needed (kWh)
@@ -307,14 +358,15 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
 
               <div className="flex gap-2">
                 <Button
-                  onClick={handleBookingSubmit}
-                  disabled={createBooking.isPending || !startTime || !endTime}
+                  onClick={handleProceedToConfirmation}
+                  disabled={
+                    !startTime ||
+                    !endTime ||
+                    (availability && !availability.available)
+                  }
                   className="flex-1"
                 >
-                  {createBooking.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Confirm Booking
+                  Continue to Payment
                 </Button>
                 <Button
                   variant="outline"
@@ -324,6 +376,97 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                   }}
                 >
                   Cancel
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Confirmation & Payment Step */}
+        {showBookingForm && selectedConnectorId && showConfirmation && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Confirm Your Booking
+              </h4>
+
+              {/* Booking Summary */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                <div className="font-medium text-blue-900">Booking Summary</div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Station:</span>
+                    <span className="font-medium text-blue-900">{station.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Connector:</span>
+                    <span className="font-medium text-blue-900">
+                      {station.connectors?.find(c => c.id === selectedConnectorId)?.type}
+                      {' '}
+                      ({station.connectors?.find(c => c.id === selectedConnectorId)?.power}kW)
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Start Time:</span>
+                    <span className="font-medium text-blue-900">{formatDateTime(startTime)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">End Time:</span>
+                    <span className="font-medium text-blue-900">{formatDateTime(endTime)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Energy Needed:</span>
+                    <span className="font-medium text-blue-900">{estimatedEnergy} kWh</span>
+                  </div>
+                  {pricing && calculateEstimatedCost() && (
+                    <>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-blue-700 font-medium">Estimated Total:</span>
+                        <span className="text-lg font-bold text-blue-900">
+                          {calculateEstimatedCost()} {pricing.currency}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Note */}
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">Payment will be processed from your wallet</p>
+                    <p className="text-xs mt-1">The actual cost will be calculated after charging is complete.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleBookingSubmit}
+                  disabled={createBooking.isPending}
+                  className="flex-1"
+                >
+                  {createBooking.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Confirm & Pay'
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConfirmation(false)}
+                  disabled={createBooking.isPending}
+                >
+                  Back
                 </Button>
               </div>
             </div>
