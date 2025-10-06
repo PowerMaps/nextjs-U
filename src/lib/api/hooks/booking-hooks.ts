@@ -44,12 +44,12 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
   
   return useApiMutation<BookingResponseDto, BookingRequestDto>(
-    '/bookings',
+    '/reservations',
     'POST',
     {
       onSuccess: (data) => {
-        // Invalidate bookings cache
-        queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        // Invalidate reservations cache
+        queryClient.invalidateQueries({ queryKey: ['reservations'] });
         
         // Invalidate station availability cache
         queryClient.invalidateQueries({ 

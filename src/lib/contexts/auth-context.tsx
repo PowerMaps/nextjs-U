@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
-import { 
-  AuthResponseDto, 
-  LoginDto, 
-  RegisterDto, 
-  UserResponseDto 
+import {
+  AuthResponseDto,
+  LoginDto,
+  RegisterDto,
+  UserResponseDto
 } from '@/lib/api/types';
 import { useAuthStore } from '@/lib/store/auth-store';
 
@@ -46,7 +47,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
   
   const router = useRouter();
-  const { accessToken, refreshToken, setTokens, clearTokens, preference , resetPreferences } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { accessToken, refreshToken, setTokens, clearTokens , resetPreferences } = useAuthStore();
 
   // Initialize authentication state on mount
   useEffect(() => {
@@ -140,32 +142,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Logout function
   const logout = (): void => {
     try {
-      
-      localStorage.removeItem('auth-store'); // Then clear storage
-      resetPreferences() // Reset preferences to default on logout
-      // Call logout endpoint to invalidate tokens on server
-      // apiClient.post('/auth/logout').catch(console.error);
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    } finally {
+      // Clear all auth-related state
       setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
         error: null,
       });
-      setTokens({
-        accessToken: '',
-        refreshToken: '',
 
-      });
-      // Clear local state and tokens regardless of API call result
+      // Clear tokens from auth store
       clearTokens();
-      
+
+      // Reset preferences to default
+      resetPreferences();
+
+      // Clear React Query cache - THIS IS CRITICAL to prevent data persistence
+      queryClient.clear();
+
+      // Clear all localStorage items
+      if (typeof window !== 'undefined') {
+        // Clear auth-related items
+        localStorage.removeItem('auth-store');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+
+        // Clear cached query data
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('queryData:')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Clear location history
+        localStorage.removeItem('recentLocations');
+        localStorage.removeItem('savedLocations');
+
+        // Clear saved routes
+        localStorage.removeItem('savedRoutes');
+
+        // Clear offline queue
+        localStorage.removeItem('offlineQueue');
+      }
+
+      // Call logout endpoint to invalidate tokens on server (optional)
+      // apiClient.post('/auth/logout').catch(console.error);
+
       // Redirect to login page
-     setTimeout(() => {
-       router.push('/auth/login');
-     }, 200);
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 100);
+    } catch (error) {
+      console.error('Logout failed:', error);
     }
   };
 

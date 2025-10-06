@@ -182,7 +182,7 @@ export default function BookingsPage() {
                       <Zap className="h-4 w-4" />
                       <span className="font-medium">{booking.connector.type}</span>
                       <span className="text-sm text-muted-foreground">
-                        {booking.connector.power}kW
+                        {booking.connector.powerOutput}kW
                       </span>
                     </div>
                   </div>

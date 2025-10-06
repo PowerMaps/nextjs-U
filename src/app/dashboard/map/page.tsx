@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { AddressAutocomplete } from '@/components/maps/address-autocomplete';
 import { RouteStatisticsPanel } from '@/components/maps/route-statistics-panel';
 import { Map } from '@/components/maps/map';
 import { StationDetailsSidebar } from '@/components/maps/station-details-sidebar';
@@ -18,12 +17,11 @@ import { EVRouteResponse, ChargingStation } from './route-interfaces';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Route, Zap, X, ArrowLeft, Menu ,
-
-
+import { Loader2, Route, Zap, X, ArrowLeft, Menu,
   MapPin,
-  Navigation, 
-
+  Navigation,
+  Locate,
+  AlertCircle
 } from 'lucide-react';
 import { MapProvider } from '@/lib/contexts/map-context';
 import { NavigationProvider, useNavigation } from '@/lib/contexts/navigation-context';
@@ -32,15 +30,25 @@ import { NavigationInstructionOverlay } from '@/components/maps/navigation-instr
 import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 import { metadata } from '@/app/layout';
+import { UnifiedAddressInput } from '@/components/maps/unified-address-input';
+
+interface AddressResult {
+  name: string;
+  latitude: number;
+  longitude: number;
+  type: 'search' | 'current_location';
+}
 
 function MapPageContent() {
   // State for route planning
   const [origin, setOrigin] = useState<string | Coordinates>('');
   const [destination, setDestination] = useState<string | Coordinates>('');
+  const [originDisplay, setOriginDisplay] = useState<string>('');
+  const [destinationDisplay, setDestinationDisplay] = useState<string>('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const [currentRoute, setCurrentRoute] = useState<EVRouteResponse | null>(null);
   const [routeDetails, setRouteDetails] = useState<any>(null);
-  const [mapCenter, setMapCenter] = useState<Coordinates>({ lat: 32.7128, lng: 10.0060 }); // Default to NYC
+  const [mapCenter, setMapCenter] = useState<Coordinates>({ lat: 32.7128, lng: 10.0060 }); // Default to Tunisia
   const [poiMarkers, setPoiMarkers] = useState<Array<{
     id: string;
     name: string;
@@ -86,6 +94,11 @@ function MapPageContent() {
     
     if (!origin || !destination || !selectedVehicleId) {
       console.log('Missing required data for route calculation');
+      toast({
+        title: "Missing information",
+        description: "Please set both origin and destination points",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -101,14 +114,14 @@ function MapPageContent() {
           ...filtered,
           {
             id: 'origin',
-            name: 'Starting Point',
+            name: originDisplay || 'Starting Point',
             latitude: originCoords.lat,
             longitude: originCoords.lng,
             type: 'origin' as const
           },
           {
             id: 'destination',
-            name: 'Destination',
+            name: destinationDisplay || 'Destination',
             latitude: destCoords.lat,
             longitude: destCoords.lng,
             type: 'destination' as const
@@ -133,15 +146,6 @@ function MapPageContent() {
       console.log('Sending route request:', routeRequest);
       const result = await calculateRoute.mutateAsync(routeRequest);
       console.log('Route calculation result:', result);
-      console.log('Route data structure:', result.route);
-      console.log('Route type:', typeof result.route);
-      console.log('Charging stations:', result.chargingStations);
-      if (result.route) {
-        console.log('Route keys:', Object.keys(result.route));
-      }
-      if (result.chargingStations) {
-        console.log('Charging stations count:', result.chargingStations.length);
-      }
       setCurrentRoute(result);
       setRouteDetails(result);
       
@@ -160,10 +164,11 @@ function MapPageContent() {
     }
   };
 
-  // Handle address selection
-  const handleOriginSelect = (address: { name: string; longitude: number; latitude: number }) => {
-    const coordinates: Coordinates = { lat: address.latitude, lng: address.longitude };
+  // Handle origin selection from unified input
+  const handleOriginSelect = (addressResult: AddressResult) => {
+    const coordinates: Coordinates = { lat: addressResult.latitude, lng: addressResult.longitude };
     setOrigin(coordinates);
+    setOriginDisplay(addressResult.name);
     setMapCenter(coordinates);
 
     // Add or update origin marker
@@ -171,28 +176,48 @@ function MapPageContent() {
       const filtered = prev.filter(marker => marker.type !== 'origin');
       return [...filtered, {
         id: 'origin',
-        name: address.name,
-        latitude: address.latitude,
-        longitude: address.longitude,
+        name: addressResult.name,
+        latitude: addressResult.latitude,
+        longitude: addressResult.longitude,
         type: 'origin' as const
       }];
     });
+
+    // Show appropriate toast based on selection type
+    if (addressResult.type === 'current_location') {
+      toast({
+        title: "Current location set",
+        description: "Using your current location as starting point",
+      });
+    } else {
+      toast({
+        title: "Origin set",
+        description: `Starting point: ${addressResult.name}`,
+      });
+    }
   };
 
-  const handleDestinationSelect = (address: { name: string; longitude: number; latitude: number }) => {
-    const coordinates: Coordinates = { lat: address.latitude, lng: address.longitude };
+  // Handle destination selection from unified input
+  const handleDestinationSelect = (addressResult: AddressResult) => {
+    const coordinates: Coordinates = { lat: addressResult.latitude, lng: addressResult.longitude };
     setDestination(coordinates);
+    setDestinationDisplay(addressResult.name);
 
     // Add or update destination marker
     setPoiMarkers(prev => {
       const filtered = prev.filter(marker => marker.type !== 'destination');
       return [...filtered, {
         id: 'destination',
-        name: address.name,
-        latitude: address.latitude,
-        longitude: address.longitude,
+        name: addressResult.name,
+        latitude: addressResult.latitude,
+        longitude: addressResult.longitude,
         type: 'destination' as const
       }];
+    });
+
+    toast({
+      title: "Destination set",
+      description: `Destination: ${addressResult.name}`,
     });
   };
 
@@ -219,6 +244,7 @@ function MapPageContent() {
       if (clickMode === 'origin') {
         const coords: Coordinates = { lat: coordinates.lat, lng: coordinates.lng };
         setOrigin(coords);
+        setOriginDisplay(address);
         setMapCenter(coords);
 
         // Add origin marker
@@ -236,7 +262,6 @@ function MapPageContent() {
         // Reset click mode
         setClickMode('none');
 
-        // Show success toast
         toast({
           title: "Origin set",
           description: `Starting point set to: ${address}`,
@@ -245,6 +270,7 @@ function MapPageContent() {
       } else if (clickMode === 'destination') {
         const coords: Coordinates = { lat: coordinates.lat, lng: coordinates.lng };
         setDestination(coords);
+        setDestinationDisplay(address);
 
         // Add destination marker
         setPoiMarkers(prev => {
@@ -261,7 +287,6 @@ function MapPageContent() {
         // Reset click mode
         setClickMode('none');
 
-        // Show success toast
         toast({
           title: "Destination set",
           description: `Destination set to: ${address}`,
@@ -276,6 +301,7 @@ function MapPageContent() {
       if (clickMode === 'origin') {
         const coords: Coordinates = { lat: coordinates.lat, lng: coordinates.lng };
         setOrigin(coords);
+        setOriginDisplay(fallbackName);
         setMapCenter(coords);
 
         setPoiMarkers(prev => {
@@ -291,6 +317,7 @@ function MapPageContent() {
       } else if (clickMode === 'destination') {
         const coords: Coordinates = { lat: coordinates.lat, lng: coordinates.lng };
         setDestination(coords);
+        setDestinationDisplay(fallbackName);
 
         setPoiMarkers(prev => {
           const filtered = prev.filter(marker => marker.type !== 'destination');
@@ -313,6 +340,8 @@ function MapPageContent() {
     setPoiMarkers([]);
     setOrigin('');
     setDestination('');
+    setOriginDisplay('');
+    setDestinationDisplay('');
     setCurrentRoute(null);
     setClickMode('none');
   };
@@ -331,7 +360,6 @@ function MapPageContent() {
     }
 
     const { analysis } = routeDetails;
-    console.log(analysis);
 
     return {
       distance: `${Math.round(analysis.totalDistance)} km`,
@@ -433,8 +461,6 @@ function MapPageContent() {
           </div>
         </div>
 
-
-
         {/* Left Control Panel - Mobile responsive */}
         {showPanels && (
           <div className="absolute top-16 sm:top-20 left-2 sm:left-4 z-10 w-[calc(100vw-1rem)] sm:w-80 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto space-y-3 sm:space-y-4">
@@ -447,32 +473,30 @@ function MapPageContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 space-y-3">
-                {/* Origin Input - Mobile optimized */}
+                {/* Origin Input with Unified Interface */}
                 <div className="space-y-1 sm:space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-blue-700">Starting Point</label>
-                  <div className="relative">
-                    <div className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full z-10"></div>
-                    <div className="pl-6 sm:pl-8">
-                      <AddressAutocomplete
-                        onSelectAddress={handleOriginSelect}
-                        placeholder="Choose starting point"
-                      />
-                    </div>
-                  </div>
+                  <label className="text-xs sm:text-sm font-medium text-blue-700 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Starting Point
+                  </label>
+                  <UnifiedAddressInput
+                    placeholder="Search address or use current location"
+                    onSelectAddress={handleOriginSelect}
+                    value={originDisplay}
+                  />
                 </div>
 
-                {/* Destination Input - Mobile optimized */}
+                {/* Destination Input with Unified Interface */}
                 <div className="space-y-1 sm:space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-blue-700">Destination</label>
-                  <div className="relative">
-                    <div className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full z-10"></div>
-                    <div className="pl-6 sm:pl-8">
-                      <AddressAutocomplete
-                        onSelectAddress={handleDestinationSelect}
-                        placeholder="Choose destination"
-                      />
-                    </div>
-                  </div>
+                  <label className="text-xs sm:text-sm font-medium text-blue-700 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    Destination
+                  </label>
+                  <UnifiedAddressInput
+                    placeholder="Search destination address"
+                    onSelectAddress={handleDestinationSelect}
+                    value={destinationDisplay}
+                  />
                 </div>
 
                 {/* Action Buttons - Mobile responsive */}
@@ -505,52 +529,6 @@ function MapPageContent() {
                         <span className="hidden sm:inline ml-1">Clear</span>
                       </Button>
                     )}
-                    
-                    {/* Test Route Button - Hidden on mobile for space */}
-                    {/* <Button
-                      onClick={() => {
-                        console.log('Setting test route');
-                        const testRoute = {
-                          success: true,
-                          route: {
-                            coordinates: [
-                              [10.0, 36.8], // Tunis area coordinates
-                              [10.1, 36.85],
-                              [10.2, 36.9],
-                              [10.3, 36.95]
-                            ]
-                          },
-                          chargingStations: [
-                            {
-                              id: 'test-station-1',
-                              name: 'Test Station 1',
-                              latitude: 36.85,
-                              longitude: 10.1,
-                              isActive: true,
-                              chargingTime: 30,
-                              cost: 15.50,
-                              batteryLevelAfter: 80,
-                              connectorType: 'Type 2'
-                            }
-                          ],
-                          analysis: {
-                            totalDistance: 50,
-                            totalTime: 3600,
-                            estimatedCost: 15.50,
-                            energyConsumption: 12,
-                            chargingTime: 1800,
-                            batteryLevelAtDestination: 80
-                          }
-                        };
-                        // setCurrentRoute(testRoute);
-                        setRouteDetails(testRoute);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-9 hidden sm:flex"
-                    >
-                      Test
-                    </Button> */}
                   </div>
                 </div>
               </CardContent>
@@ -595,7 +573,7 @@ function MapPageContent() {
                 <div className="space-y-2">
                   <label className="text-xs sm:text-sm font-medium flex items-center gap-2">
                     <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                    Quick Set
+                    Quick Set on Map
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
@@ -643,7 +621,7 @@ function MapPageContent() {
                         <div className="min-w-0 flex-1">
                           <span className="text-muted-foreground text-xs">From:</span>
                           <div className="truncate font-medium">
-                            {poiMarkers.find(m => m.type === 'origin')?.name || `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`}
+                            {originDisplay || `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`}
                           </div>
                         </div>
                       </div>
@@ -654,7 +632,7 @@ function MapPageContent() {
                         <div className="min-w-0 flex-1">
                           <span className="text-muted-foreground text-xs">To:</span>
                           <div className="truncate font-medium">
-                            {poiMarkers.find(m => m.type === 'destination')?.name || `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`}
+                            {destinationDisplay || `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`}
                           </div>
                         </div>
                       </div>
@@ -726,7 +704,7 @@ function MapPageContent() {
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span className="truncate max-w-[200px]">
-                        {poiMarkers.find(m => m.type === 'origin')?.name || 'Start set'}
+                        {originDisplay || 'Start set'}
                       </span>
                     </div>
                   )}
@@ -734,7 +712,7 @@ function MapPageContent() {
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                       <span className="truncate max-w-[200px]">
-                        {poiMarkers.find(m => m.type === 'destination')?.name || 'End set'}
+                        {destinationDisplay || 'End set'}
                       </span>
                     </div>
                   )}
@@ -873,119 +851,6 @@ function MapPageContent() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
-
-        {/* Mobile Route Statistics Overlay */}
-        {currentRoute && !selectedStationId && showPanels && (
-          <div className="lg:hidden absolute top-16 left-2 right-2 z-10 max-h-[calc(100vh-8rem)] overflow-y-auto">
-            <Card className="shadow-lg bg-white/95 backdrop-blur-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Route className="h-4 w-4 text-blue-600" />
-                    Route Summary
-                  </h3>
-                  <Button
-                    onClick={() => setShowPanels(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="text-center p-2 bg-blue-50 rounded">
-                    <div className="font-semibold text-blue-900">{routeStats.distance}</div>
-                    <div className="text-blue-600">Distance</div>
-                  </div>
-                  <div className="text-center p-2 bg-green-50 rounded">
-                    <div className="font-semibold text-green-900">{routeStats.duration}</div>
-                    <div className="text-green-600">Duration</div>
-                  </div>
-                  <div className="text-center p-2 bg-yellow-50 rounded">
-                    <div className="font-semibold text-yellow-900">{routeStats.estimatedCost}</div>
-                    <div className="text-yellow-600">Cost</div>
-                  </div>
-                  <div className="text-center p-2 bg-purple-50 rounded">
-                    <div className="font-semibold text-purple-900">{currentRoute?.chargingStations?.length || 0}</div>
-                    <div className="text-purple-600">Stops</div>
-                  </div>
-                </div>
-
-                {/* Navigation Controls for Mobile */}
-                <div className="mt-3 pt-3 border-t">
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => navigation.startNavigation(currentRoute?.route)}
-                      disabled={navigation.isNavigating}
-                      size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
-                    >
-                      {navigation.isNavigating ? (
-                        <>
-                          <Navigation className="h-3 w-3 mr-1" />
-                          Navigating
-                        </>
-                      ) : (
-                        <>
-                          <Navigation className="h-3 w-3 mr-1" />
-                          Start Navigation
-                        </>
-                      )}
-                    </Button>
-                    
-                    {navigation.isNavigating && (
-                      <Button
-                        onClick={navigation.stopNavigation}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Station Details Sidebar - Mobile responsive */}
-        {selectedStationId && (
-          <div className="fixed top-12 sm:top-16 right-0 z-30 w-full sm:w-80 h-[calc(100vh-3rem)] sm:h-[calc(100vh-4rem)] bg-white border-l shadow-xl">
-            <StationDetailsSidebar
-              stationId={selectedStationId}
-              onClose={() => setSelectedStationId(null)}
-            />
-          </div>
-        )}
-
-        {/* Right Panel - Route Statistics and Navigation - Mobile responsive */}
-        {currentRoute && !selectedStationId && showPanels && (
-          <div className="hidden lg:block absolute top-32 right-4 z-10 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-9rem)] overflow-y-auto space-y-4">
-            {/* Navigation Panel */}
-            <NavigationPanel
-              route={currentRoute?.route}
-              isNavigating={navigation.isNavigating}
-              onStartNavigation={() => navigation.startNavigation(currentRoute?.route)}
-              onStopNavigation={navigation.stopNavigation}
-              onPauseNavigation={navigation.pauseNavigation}
-              onResumeNavigation={navigation.resumeNavigation}
-              currentStepIndex={navigation.currentStepIndex}
-              onStepChange={navigation.setCurrentStep}
-            />
-
-            <RouteStatisticsPanel
-              distance={routeStats.distance}
-              duration={routeStats.duration}
-              energyConsumption={routeStats.energyConsumption}
-              estimatedCost={routeStats.estimatedCost}
-              chargingStops={currentRoute?.chargingStations?.length || 0}
-            />
           </div>
         )}
       </div>

@@ -227,10 +227,11 @@ export interface ChargingStationResponseDto {
 export interface ConnectorResponseDto {
   id: string;
   type: string;
-  power: number;
+  powerOutput?: number;
   status: 'AVAILABLE' | 'IN_USE' | 'OFFLINE' | 'RESERVED';
   station: ChargingStationResponseDto;
   pricePerKwh?: number;
+  isAvailable?:boolean
 }
 
 export interface BookingRequestDto {

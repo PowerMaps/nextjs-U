@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ChargingStationResponseDto } from '@/lib/api/types';
 
-import { useCreateBooking, useConnectorPricing, useCheckConnectorAvailability } from '@/lib/api/hooks/booking-hooks';
+import { useCreateBooking, useCheckConnectorAvailability } from '@/lib/api/hooks/booking-hooks';
 import { Button } from '@/components/ui/button';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,15 +39,23 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const router = useRouter();
+  console.log('sattion data' , station 
 
+  )
   // Use connectors directly from station data - no need for separate API call
-  const { data: pricing } = useConnectorPricing(selectedConnectorId);
   const { data: availability } = useCheckConnectorAvailability(
     selectedConnectorId,
     startTime,
     endTime
   );
   const createBooking = useCreateBooking();
+
+  // Get pricing from the selected connector
+  const selectedConnector = station.connectors?.find(c => c.id === selectedConnectorId);
+  const pricing = selectedConnector ? {
+    pricePerKwh: selectedConnector.pricePerKwh || 0,
+    currency: '€'
+  } : null;
 
   const getConnectorStatusColor = (status: string) => {
     console.log(status);
@@ -224,8 +232,11 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                       : 'hover:bg-gray-50'
                     }`}
                   onClick={() => {
-                    if (connector.status?.toLocaleUpperCase() === 'AVAILABLE') {
+                    if (connector.isAvailable) {
                       setSelectedConnectorId(connector.id);
+                      setShowBookingForm(true);
+                      if (!startTime) setStartTime(defaultTimes.start);
+                      if (!endTime) setEndTime(defaultTimes.end);
                     }
                   }}
                 >
@@ -237,7 +248,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                       </Badge>
                       <span className="font-medium">{connector.type}</span>
                       <span className="text-sm text-muted-foreground">
-                        {connector.power}kW
+                        {connector.powerOutput}kW
                       </span>
                       {connector.pricePerKwh && (
                         <span className="text-xs text-muted-foreground">
@@ -406,7 +417,7 @@ export function StationInfoWindow({ station, onClose }: StationInfoWindowProps) 
                     <span className="font-medium text-blue-900">
                       {station.connectors?.find(c => c.id === selectedConnectorId)?.type}
                       {' '}
-                      ({station.connectors?.find(c => c.id === selectedConnectorId)?.power}kW)
+                      ({station.connectors?.find(c => c.id === selectedConnectorId)?.powerOutput}kW)
                     </span>
                   </div>
                   <div className="flex justify-between">
