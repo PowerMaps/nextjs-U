@@ -55,7 +55,7 @@ class ApiClient {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      timeout: 10000,
+      timeout: 50000,
     });
 
     // Request interceptor
