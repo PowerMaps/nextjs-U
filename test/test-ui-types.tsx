@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from './src/components/ui/button';
-import { Card } from './src/components/ui/card';
-import { Input } from './src/components/ui/input';
+import { Button } from '../src/components/ui/button';
+import { Card } from '../src/components/ui/card';
+import { Input } from '../src/components/ui/input';
 
 // Test that components have proper TypeScript types
 const TestComponent: React.FC = () => {
