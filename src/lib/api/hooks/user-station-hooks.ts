@@ -192,7 +192,7 @@ export const useUpdateStation = () => {
   return useMutation({
     mutationFn: async (data: UpdateStationDto): Promise<UserStationResponse> => {
       const { id, ...updateData } = data;
-      const response = await apiClient.put(`/stations/${id}`, updateData);
+      const response = await apiClient.patch(`/stations/${id}`, updateData);
       return response.data;
     },
     onSuccess: () => {
