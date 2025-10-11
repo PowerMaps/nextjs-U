@@ -3,6 +3,7 @@
 import { useApiQuery, useApiMutation, usePaginatedApiQuery, useOptimisticUpdateConfig } from './base-hooks';
 import { CreateVehicleDto, PaginationQueryDto, UpdateVehicleDto, VehicleResponseDto } from '../types';
 import { toast } from '@/components/ui/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Hook to get all user vehicles
 export function useVehicles(params: PaginationQueryDto = {}) {
@@ -28,11 +29,15 @@ export function useVehicle(vehicleId: string) {
 
 // Hook to create a new vehicle
 export function useCreateVehicle() {
+  const queryClient = useQueryClient();
+
   return useApiMutation<VehicleResponseDto, CreateVehicleDto>(
     '/vehicles',
     'POST',
     {
       onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+
         toast({
           title: 'Vehicle added',
           description: `${data.make} ${data.model} has been added to your account.`,
@@ -52,7 +57,7 @@ export function useCreateVehicle() {
 // Hook to update a vehicle
 export function useUpdateVehicle(vehicleId: string) {
   const queryKey = ['vehicle', vehicleId];
-  
+
   return useApiMutation<VehicleResponseDto, UpdateVehicleDto>(
     `/vehicles/${vehicleId}`,
     'PATCH',
