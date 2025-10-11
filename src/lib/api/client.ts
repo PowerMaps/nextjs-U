@@ -79,6 +79,17 @@ class ApiClient {
           const token = authData ? JSON.parse(authData)?.state?.accessToken : null;
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
+
+            // for some reasons api is receiving user id and role in  request header....
+            // the shit I do ...
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              if (payload.sub || payload.userId || payload.id) {
+                config.headers.user = payload.sub || payload.userId || payload.id;
+              }
+            } catch (err) {
+              console.warn('Failed to decode token for user ID:', err);
+            }
           }
         }
 
@@ -89,6 +100,7 @@ class ApiClient {
             timestamp: new Date().toISOString(),
           });
         }
+
 
         return config;
       },
@@ -179,7 +191,7 @@ class ApiClient {
 
   // Generic request method
   public async request<T = any>(config: AxiosRequestConfig): Promise<T> {
-    
+
     const response = await this.client.request<T>(config);
     return response.data;
   }

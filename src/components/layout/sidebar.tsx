@@ -3,17 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
-import {
-  BarChart3,
-  Car,
-  CreditCard,
-  Home,
-  Map,
-  MapPin,
-  Settings,
-  User,
-  X,
-} from "lucide-react";
+import { BarChart3, Car, CreditCard, Home, Map, MapPin, Settings, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
@@ -34,42 +24,42 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
     {
       title: "Dashboard",
       href: "/dashboard",
-      icon: <Home className="h-5 w-5" />,
+      icon: <Home className="w-5 h-5" />,
     },
     {
       title: "My Vehicles",
       href: "/dashboard/vehicles",
-      icon: <Car className="h-5 w-5" />,
+      icon: <Car className="w-5 h-5" />,
     },
     {
       title: "Route Planning",
       href: "/dashboard/map",
-      icon: <Map className="h-5 w-5" />,
+      icon: <Map className="w-5 h-5" />,
     },
     {
       title: "Charging Stations",
       href: "/dashboard/stations",
-      icon: <MapPin className="h-5 w-5" />,
+      icon: <MapPin className="w-5 h-5" />,
     },
     {
       title: "Wallet",
       href: "/dashboard/wallet",
-      icon: <CreditCard className="h-5 w-5" />,
+      icon: <CreditCard className="w-5 h-5" />,
     },
     {
       title: "Analytics",
       href: "/dashboard/analytics",
-      icon: <BarChart3 className="h-5 w-5" />,
+      icon: <BarChart3 className="w-5 h-5" />,
     },
     {
       title: "Profile",
       href: "/dashboard/profile",
-      icon: <User className="h-5 w-5" />,
+      icon: <User className="w-5 h-5" />,
     },
     {
       title: "Settings",
       href: "/dashboard/settings",
-      icon: <Settings className="h-5 w-5" />,
+      icon: <Settings className="w-5 h-5" />,
     },
   ];
 
@@ -86,124 +76,92 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "group fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-background transition-all duration-300 md:z-0",
-          open 
-            ? "w-64 translate-x-0" 
-            : "-translate-x-full md:translate-x-0 md:w-16 md:hover:w-64"
+          "group fixed top-0 h-full left-0 z-50",
+          "flex flex-col items-start justify-between",
+          "border-r bg-background transition-all duration-150 md:z-0",
+          open
+            ? "w-64 translate-x-0"
+            : "-translate-x-full md:translate-x-0 md:w-16 md:hover:w-64 items-center"
         )}
       >
-        {/* Header - Mobile close button */}
-        <div className="flex h-16 items-center justify-between border-b px-4 md:hidden">
-          <Link href="/" className="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-6 w-6 text-primary"
-            >
-              <path
-                fillRule="evenodd"
-                d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-xl font-bold">ChargeTN</span>
-          </Link>
-          <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close sidebar</span>
-          </Button>
-        </div>
+        <div className="w-full">
+          {/* Header - Mobile close button */}
+          <div className="flex items-center justify-between h-16 px-2 border-b md:hidden">
+            <Link href="/" className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-6 h-6 text-primary"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-xl font-bold">PowerMaps</span>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+              <X className="w-5 h-5" />
+              <span className="sr-only">Close sidebar</span>
+            </Button>
+          </div>
 
-        {/* Desktop Logo - Hidden on mobile, shown on desktop */}
-        <div className="hidden md:flex h-16 items-center border-b px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-6 w-6 text-primary flex-shrink-0"
-            >
-              <path
-                fillRule="evenodd"
-                d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span 
-              className={cn(
-                "text-xl font-bold transition-all duration-300",
-                open ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              )}
-            >
-              ChargeTN
-            </span>
-          </Link>
-        </div>
+          <div className="hidden h-16 lg:block"></div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-2">
-          <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "group/item relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
-                    pathname === item.href && "bg-accent text-accent-foreground",
-                    "gap-3"
-                  )}
-                  title={!open ? item.title : undefined}
-                >
-                  <div className="flex-shrink-0">
-                    {item.icon}
-                  </div>
-                  <span 
-                    className={cn(
-                      "transition-all duration-300",
-                      open 
-                        ? "opacity-100" 
-                        : "opacity-0 md:group-hover:opacity-100"
-                    )}
-                  >
-                    {item.title}
-                  </span>
-                  
-                  {/* Tooltip for collapsed state */}
-                  {!open && (
-                    <div className="absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md opacity-0 pointer-events-none group-hover/item:opacity-100 group-hover/item:pointer-events-auto transition-opacity duration-200 whitespace-nowrap z-50 md:group-hover:hidden">
-                      {item.title}
-                    </div>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+          {/* Navigation */}
+          <nav className="w-full">
+            <ul>
+              {
+                navItems.map((item: NavItem) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "relative flex items-center rounded-md h-10 p-2 text-sm font-medium transition-all hover:bg-accent gap-2",
+                        open ? "justify-start" : "justify-center md:group-hover:justify-start",
+                        pathname === item.href && "bg-accent text-accent-foreground"
+                      )}
+                      title={!open ? item.title : undefined}
+                    >
+                      <span>{item.icon}</span>
+                      <span
+                        className={cn(
+                          open
+                            ? "block"
+                            : "hidden md:group-hover:block"
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                    </Link>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+        </div>
 
         {/* User info at bottom */}
-        <div className="border-t p-4">
-          <div 
+        <div
+          className={cn(
+            "w-full px-2 py-4 border-t",
+            "flex items-center gap-3 transition-all duration-300",
+            open ? "justify-start" : "justify-center md:group-hover:justify-start",
+          )}
+        >
+          <span className="flex items-center justify-center w-8 h-8 bg-red-300 rounded-full bg-primary text-primary-foreground">JD</span>
+          <div
             className={cn(
-              "flex items-center gap-3 transition-all duration-300"
+              "min-w-0 transition-all duration-300",
+              open
+                ? "block"
+                : "hidden md:group-hover:block"
             )}
           >
-            <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex-shrink-0">
-              <span className="flex h-full w-full items-center justify-center text-sm font-medium">
-                JD
-              </span>
-            </div>
-            <div 
-              className={cn(
-                "min-w-0 transition-all duration-300",
-                open 
-                  ? "opacity-100" 
-                  : "opacity-0 md:group-hover:opacity-100"
-              )}
-            >
-              <p className="text-sm font-medium truncate">John Doe</p>
-              <p className="text-xs text-muted-foreground truncate">john@example.com</p>
-            </div>
+            <p className="text-sm font-medium truncate">John Doe</p>
+            <p className="text-xs truncate text-muted-foreground">john@example.com</p>
           </div>
         </div>
       </aside>

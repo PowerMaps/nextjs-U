@@ -9,35 +9,28 @@
     "build:native": "cross-env CAPACITOR_BUILD=true next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest --watchAll",
-    
     "build:android": "npm run build:native && npx cap copy android && npx cap sync android",
     "build:ios": "npm run build:native && npx cap copy ios && npx cap sync ios",
-    
     "build:android:dev": "cross-env NODE_ENV=development CAPACITOR_BUILD=true next build && npx cap copy android && npx cap sync android",
     "build:android:staging": "cross-env NODE_ENV=production NEXT_PUBLIC_APP_ENV=staging CAPACITOR_BUILD=true next build && npx cap copy android && npx cap sync android",
     "build:android:prod": "cross-env NODE_ENV=production CAPACITOR_BUILD=true next build && npx cap copy android && npx cap sync android",
     "build:ios:dev": "cross-env NODE_ENV=development CAPACITOR_BUILD=true next build && npx cap copy ios && npx cap sync ios",
     "build:ios:staging": "cross-env NODE_ENV=production NEXT_PUBLIC_APP_ENV=staging CAPACITOR_BUILD=true next build && npx cap copy ios && npx cap sync ios",
     "build:ios:prod": "cross-env NODE_ENV=production CAPACITOR_BUILD=true next build && npx cap copy ios && npx cap sync ios",
-    
     "run:android:dev": "npm run build:android:dev && npx cap run android",
     "run:android:staging": "npm run build:android:staging && npx cap run android",
     "run:android:prod": "npm run build:android:prod && npx cap run android",
     "run:ios:dev": "npm run build:ios:dev && npx cap run ios",
     "run:ios:staging": "npm run build:ios:staging && npx cap run ios",
     "run:ios:prod": "npm run build:ios:prod && npx cap run ios",
-    
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
-    
     "cap:add:android": "npx cap add android",
     "cap:add:ios": "npx cap add ios",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "cap:run:android": "npm run build:android && npx cap run android",
     "cap:run:ios": "npm run build:ios && npx cap run ios",
-    
     "android:build": "npm run build:android && cd android && .\\gradlew assembleDebug",
     "android:build:release": "npm run build:android && cd android && .\\gradlew assembleRelease",
     "android:build:dev": "npm run build:android:dev && cd android && .\\gradlew assembleDebug",
@@ -119,16 +112,10 @@
     "@types/react": "^18.2.38",
     "@types/react-dom": "^18.2.17",
     "autoprefixer": "^10.4.16",
-    "babel-jest": "^30.0.5",
     "cross-env": "^10.0.0",
     "eslint": "^8.54.0",
     "eslint-config-next": "14.0.3",
-    "eslint-config-prettier": "^10.1.8",
-    "jest": "^30.0.5",
-    "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   }
